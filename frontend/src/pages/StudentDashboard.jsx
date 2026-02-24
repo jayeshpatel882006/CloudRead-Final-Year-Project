@@ -82,61 +82,135 @@ const StudentDashboard = () => {
   return bookRequests[0].status;
 };
 
+// if (loading) {
+//   return (
+//     <Layout>
+//        <Loader />
+//     </Layout>
+//   );
+// }
+
+//   return (
+
+//     <Layout>
+//       <h2>📚 Student Dashboard</h2>
+      
+
+//       {books.map((book) =>{
+//         const status = getBookStatus(book._id);
+        
+//         return(
+//         <div
+//           key={book._id} className="card"
+//           style={{
+//             border: "1px solid #ccc",
+//             padding: "15px",
+//             marginBottom: "10px",
+//           }}
+//         >
+//           <h3>{book.title}</h3>
+//           <p>Author: {book.author}</p>
+//           <p>Category: {book.category}</p>
+//          {status && (
+//   <span className={`status ${status}`}>
+//     {status.toUpperCase()}
+//   </span>
+// )}
+
+// {status === "pending" && (
+//   <button disabled>⏳ Pending Approval</button>
+// )}
+
+// {status === "approved" && (
+//   <button style={{ backgroundColor: "#4f46e5", color: "white" }} onClick={() => openBook(book._id)}>
+//     📖 Open Book
+//   </button>
+// )}
+
+// {status === "expired" || status === "rejected" && (
+//   <button style={{ backgroundColor: "#4f46e5", color: "white" }} onClick={() => requestAccess(book._id)}>
+//     🔄 Request Again
+//   </button>
+// )}
+//         </div>
+//       ) })}
+//     {/* </div> */}
+//     </Layout>
+
+//   );
+// };
 if (loading) {
   return (
     <Layout>
-       <Loader />
+      <Loader />
     </Layout>
   );
 }
 
-  return (
-    <Layout>
-      <h2>📚 Student Dashboard</h2>
-      
+return (
+  <Layout>
+    <div className="dashboard-container">
+      <h2 className="dashboard-title">📚 Student Dashboard</h2>
 
-      {books.map((book) =>{
-        const status = getBookStatus(book._id);
-        
-        return(
-        <div
-          key={book._id}
-          style={{
-            border: "1px solid #ccc",
-            padding: "15px",
-            marginBottom: "10px",
-          }}
-        >
-          <h3>{book.title}</h3>
-          <p>Author: {book.author}</p>
-          <p>Category: {book.category}</p>
-          {!status && (
-  <button onClick={() => requestAccess(book._id)}>
-    📩 Request Access
-  </button>
-)}
+      <div className="book-grid">
+        {books.map((book) => {
+          const status = getBookStatus(book._id);
 
-{status === "pending" && (
-  <button disabled>⏳ Pending Approval</button>
-)}
+          return (
+            <div key={book._id} className="book-card">
+              <div className="card-header">
+                <h3>{book.title}</h3>
+                {status && (
+                  <span className={`status-badge ${status}`}>
+                    {status.toUpperCase()}
+                  </span>
+                )}
+              </div>
 
-{status === "approved" && (
-  <button onClick={() => openBook(book._id)}>
-    📖 Open Book
-  </button>
-)}
+              <p className="book-meta">👤 {book.author}</p>
+              <p className="book-meta">📂 {book.category}</p>
 
-{status === "expired" || status === "rejected" && (
-  <button onClick={() => requestAccess(book._id)}>
-    🔄 Request Again
-  </button>
-)}
-        </div>
-      ) })}
-    {/* </div> */}
-    </Layout>
+              <div className="card-actions">
+                {status === "pending" && (
+                  <button className="btn disabled" disabled>
+                    ⏳ Pending Approval
+                  </button>
+                )}
 
-  );
-};
+                {status === "approved" && (
+                  <button
+                    className="btn primary"
+                    onClick={() => openBook(book._id)}
+                  >
+                    📖 Open Book
+                  </button>
+                )}
+
+                {(status === "expired" || status === "rejected") && (
+                  <button
+                    className="btn primary"
+                    onClick={() => requestAccess(book._id)}
+                  >
+                    🔄 Request Again
+                  </button>
+                )}
+
+                {!status && (
+                  <button
+                    className="btn primary"
+                    onClick={() => requestAccess(book._id)}
+                  >
+                    📩 Request Access
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </Layout>
+);
+}
 
 export default StudentDashboard;

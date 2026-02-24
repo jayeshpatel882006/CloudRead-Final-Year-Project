@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Layout from "../components/Layout";
-
+import PageWrapper from "../components/PageWrapper";
+import "../css/libraryan.css";
 
 const LibrarianDashboard = () => {
   const [requests, setRequests] = useState([]);
@@ -65,93 +66,122 @@ const LibrarianDashboard = () => {
     }
   };
 
-  return (
-    <Layout>
-      <h2>📚 Librarian Dashboard</h2>
+ 
+return (
+  <Layout>
+    <PageWrapper>
+      <div className="librarian-container">
 
-      {/* Add Book Section */}
-      <h3>➕ Add New Book</h3>
-      <form onSubmit={addBook} style={{ marginBottom: "30px" }}>
-        <input
-          placeholder="Title"
-          value={formData.title}
-          onChange={(e) =>
-            setFormData({ ...formData, title: e.target.value })
-          }
-        />
-        <input
-          placeholder="Author"
-          value={formData.author}
-          onChange={(e) =>
-            setFormData({ ...formData, author: e.target.value })
-          }
-        />
-        <input
-          placeholder="Category"
-          value={formData.category}
-          onChange={(e) =>
-            setFormData({ ...formData, category: e.target.value })
-          }
-        />
-        <input
-          placeholder="PDF Link"
-          value={formData.pdfLink}
-          onChange={(e) =>
-            setFormData({ ...formData, pdfLink: e.target.value })
-          }
-        />
-        <button type="submit">Add Book</button>
-      </form>
+        <h2 className="dashboard-title">Librarian Dashboard</h2>
 
-      {/* Pending Requests Section */}
-      <h3>📩 Pending Access Requests</h3>
-      {requests
-        .filter((req) => req.status === "pending")
-        .map((req) => (
-          <div
-            key={req._id}
-            style={{
-              border: "1px solid #ccc",
-              padding: "10px",
-              marginBottom: "10px",
-            }}
-          >
-            <p>
-              👤 {req.user?.name} → 📖 {req.book?.title}
-            </p>
-            <button
-  onClick={() => approveRequest(req._id)}
-  style={{ marginRight: "10px" }}
->
-  ✅ Approve
-</button>
+        {/* Add Book Section */}
+        <div className="card-section">
+          <h3>Add New Book</h3>
 
-<button
-  onClick={() => rejectRequest(req._id)}
-  style={{ backgroundColor: "#ff4d4d", color: "white" }}
->
-  ❌ Reject
-</button>
-          </div>
-        ))}
+          <form onSubmit={addBook} className="librarian-form">
+            <input
+              type="text"
+              placeholder="Title"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              required
+            />
 
-      {/* All Books */}
-      <h3>📖 All Books</h3>
-      {books.map((book) => (
-        <div
-          key={book._id}
-          style={{
-            border: "1px solid #eee",
-            padding: "10px",
-            marginBottom: "5px",
-          }}
-        >
-          {book.title} — {book.author}
+            <input
+              type="text"
+              placeholder="Author"
+              value={formData.author}
+              onChange={(e) =>
+                setFormData({ ...formData, author: e.target.value })
+              }
+              required
+            />
+
+            <input
+              type="text"
+              placeholder="Category"
+              value={formData.category}
+              onChange={(e) =>
+                setFormData({ ...formData, category: e.target.value })
+              }
+              required
+            />
+
+            <input
+              type="text"
+              placeholder="PDF Link"
+              value={formData.pdfLink}
+              onChange={(e) =>
+                setFormData({ ...formData, pdfLink: e.target.value })
+              }
+              required
+            />
+
+            <button type="submit" className="btn-primary">
+              Add Book
+            </button>
+          </form>
         </div>
-      ))}
-      
-    </Layout>
-  );
+
+        {/* Pending Requests */}
+        <div className="card-section">
+          <h3>Pending Requests</h3>
+
+          {requests.filter(r => r.status === "pending").length === 0 && (
+            <p className="empty-text">No pending requests</p>
+          )}
+
+          {requests
+            .filter(r => r.status === "pending")
+            .map((req) => (
+              <div key={req._id} className="request-card">
+                <div>
+                  <strong>{req.user?.name}</strong>
+                  <p>{req.book?.title}</p>
+                </div>
+
+                <div className="request-actions">
+                  <button
+                    onClick={() => approveRequest(req._id)}
+                    className="btn-success"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    onClick={() => rejectRequest(req._id)}
+                    className="btn-danger"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* All Books */}
+        <div className="card-section">
+          <h3>All Books</h3>
+
+          <div className="books-grid">
+            {books.map((book) => (
+              <div key={book._id} className="book-card-modern">
+                <h4>{book.title}</h4>
+                <p>{book.author}</p>
+                <span className="category-tag">
+                  {book.category}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+      </div>
+    </PageWrapper>
+  </Layout>
+);
 };
 
 export default LibrarianDashboard;

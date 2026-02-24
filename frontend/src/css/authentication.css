@@ -1,0 +1,189 @@
+/* ===== AUTH PAGE ===== */
+
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  background:
+    radial-gradient(circle at 20% 30%, rgba(59,130,246,0.2), transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(99,102,241,0.2), transparent 40%),
+    #f8fafc;
+}
+
+.auth-card {
+  background: white;
+  width: 400px;
+  padding: 40px;
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #1e3a8a;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 30px;
+}
+
+/* ===== Form ===== */
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.auth-form input,
+.auth-form select {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  outline: none;
+  transition: 0.2s ease;
+}
+
+.auth-form input:focus,
+.auth-form select:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* ===== Button ===== */
+
+.auth-button {
+  margin-top: 10px;
+  padding: 12px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.auth-button:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Error ===== */
+
+.auth-error {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 15px;
+}
+
+/* ===== Footer ===== */
+
+.auth-footer {
+  margin-top: 20px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.auth-footer span {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.auth-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-container::before,
+.auth-container::after {
+  content: "";
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  filter: blur(120px);
+  z-index: 0;
+}
+
+.auth-container::before {
+  background: rgba(59, 130, 246, 0.25);
+  top: -150px;
+  left: -150px;
+}
+
+.auth-container::after {
+  background: rgba(99, 102, 241, 0.25);
+  bottom: -150px;
+  right: -150px;
+}
+
+.auth-card {
+  position: relative;
+  z-index: 1;
+}
+
+/* Slight visual difference for login */
+
+.auth-title {
+  font-size: 30px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #2563eb, #4f46e5);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== Password Toggle ===== */
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #64748b;
+  transition: 0.2s ease;
+}
+
+.toggle-password:hover {
+  color: #2563eb;
+}
+
+/* ===== Explore Homepage Link ===== */
+
+.auth-explore {
+  margin-top: 10px;
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+.auth-explore span {
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.auth-explore span:hover {
+  text-decoration: underline;
+}

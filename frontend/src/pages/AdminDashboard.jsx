@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Layout from "../components/Layout";
+import "../css/admin.css";
+import { ResponsiveContainer } from "recharts";
 
 import {
   BarChart,
@@ -32,55 +34,59 @@ const AdminDashboard = () => {
   }, []);
 
   return (
-    <Layout>
-      <h2>📊 Admin Dashboard</h2>
+  <Layout>
+    <div className="admin-container">
+
+      <h2 className="admin-title">Admin Dashboard</h2>
 
       {/* Stats Cards */}
-      <div style={{ display: "flex", gap: "20px", marginBottom: "40px" }}>
-        <div style={cardStyle}>
-          <h3>Total Users</h3>
-          <p>{stats.totalUsers}</p>
+      <div className="admin-stats">
+        <div className="stat-card">
+          <h4>Total Users</h4>
+          <p>{stats.totalUsers || 0}</p>
         </div>
 
-        <div style={cardStyle}>
-          <h3>Total Books</h3>
-          <p>{stats.totalBooks}</p>
+        <div className="stat-card">
+          <h4>Total Books</h4>
+          <p>{stats.totalBooks || 0}</p>
         </div>
 
-        <div style={cardStyle}>
-          <h3>Active Access</h3>
-          <p>{stats.activeAccess}</p>
+        <div className="stat-card">
+          <h4>Active Access</h4>
+          <p>{stats.activeAccess || 0}</p>
         </div>
 
-        <div style={cardStyle}>
-          <h3>Expired Access</h3>
-          <p>{stats.expiredAccess}</p>
+        <div className="stat-card">
+          <h4>Expired Access</h4>
+          <p>{stats.expiredAccess || 0}</p>
         </div>
       </div>
 
-      {/* Bar Chart */}
-      <h3>🔥 Most Accessed Books</h3>
-      <BarChart
-        width={600}
-        height={300}
-        data={topBooks}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="title" />
-        <YAxis />
-        <Tooltip />
-        <Bar dataKey="totalAccessCount" fill="#8884d8" />
-      </BarChart>
-    </Layout>
-  );
+      {/* Chart Section */}
+      <div className="chart-section">
+        <h3>Most Accessed Books</h3>
+
+        <div className="chart-wrapper">
+          <ResponsiveContainer width="100%" height={350}>
+          <BarChart
+            width="100%"
+            height={350}
+            data={topBooks}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="title" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="totalAccessCount" fill="#2563eb" />
+          </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+
+    </div>
+  </Layout>
+);
 };
 
-const cardStyle = {
-  border: "1px solid #ccc",
-  padding: "20px",
-  borderRadius: "10px",
-  width: "150px",
-  textAlign: "center",
-};
 
 export default AdminDashboard;

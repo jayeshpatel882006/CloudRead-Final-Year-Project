@@ -1,0 +1,168 @@
+/* ===== Librarian Dashboard ===== */
+
+.librarian-container {
+  padding: 40px;
+  max-width: 1100px;
+  margin: auto;
+}
+
+.dashboard-title {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 30px;
+  color: #1e3a8a;
+}
+
+/* Section Cards */
+
+.card-section {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  margin-bottom: 40px;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.06);
+}
+
+.card-section h3 {
+  margin-bottom: 20px;
+  font-weight: 600;
+}
+
+/* ===== Form ===== */
+
+.librarian-form {
+  display: grid;
+  gap: 15px;
+}
+
+.librarian-form input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+
+.librarian-form input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+/* ===== Requests ===== */
+
+.request-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-radius: 12px;
+  background: #f8fafc;
+  margin-bottom: 15px;
+  transition: 0.2s ease;
+}
+
+.request-card:hover {
+  background: #eef2ff;
+}
+
+.request-card strong {
+  display: block;
+}
+
+.request-card p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.request-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-success {
+  background: #22c55e;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-success:hover {
+  background: #16a34a;
+}
+
+.btn-danger {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #dc2626;
+}
+
+/* ===== Books Grid ===== */
+
+.books-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.book-card-modern {
+  background: #f9fafb;
+  padding: 20px;
+  border-radius: 14px;
+  transition: 0.2s ease;
+}
+
+.book-card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06);
+}
+
+.book-card-modern h4 {
+  margin-bottom: 6px;
+}
+
+.book-card-modern p {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.category-tag {
+  display: inline-block;
+  margin-top: 10px;
+  background: #e0e7ff;
+  color: #1e40af;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+}
+
+.empty-text {
+  color: #94a3b8;
+  font-size: 14px;
+}
