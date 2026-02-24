@@ -23,7 +23,9 @@ export const addBook = async (req, res) => {
 // 📌 Get All Books
 export const getAllBooks = async (req, res) => {
   try {
-    const books = await Book.find().populate("uploadedBy", "name role");
+    const books = await Book.find()
+      .select("-pdfLink")
+      .populate("uploadedBy", "name role");
     res.json(books);
   } catch (error) {
     res.status(500).json({ message: error.message });

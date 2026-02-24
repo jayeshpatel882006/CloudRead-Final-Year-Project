@@ -7,6 +7,11 @@ import User from "../models/User.js";
 export const requestAccess = async (req, res) => {
   try {
     const { bookId } = req.body;
+    await AccessRequest.deleteMany({
+      user: req.user._id,
+      book: bookId,
+      status: "expired",
+    });
 
     const existingRequest = await AccessRequest.findOne({
       user: req.user._id,
@@ -117,6 +122,23 @@ export const getSecureBookAccess = async (req, res) => {
       pdfLink: access.book.pdfLink,
       accessEndDate: access.accessEndDate,
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+export const rejectRequest = async (req, res) => {
+  try {
+    const request = await AccessRequest.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
+    }
+
+    request.status = "rejected";
+    await request.save();
+
+    res.json({ message: "Request rejected successfully" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

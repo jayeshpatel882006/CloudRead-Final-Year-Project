@@ -5,6 +5,7 @@ import {
   getMyRequests,
   getAllRequests,
   getSecureBookAccess,
+  rejectRequest,
 } from "../controllers/accessController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -35,6 +36,13 @@ router.get(
   protect,
   authorizeRoles("student"),
   getSecureBookAccess,
+);
+
+router.put(
+  "/reject/:id",
+  protect,
+  authorizeRoles("librarian", "admin"),
+  rejectRequest,
 );
 
 export default router;
