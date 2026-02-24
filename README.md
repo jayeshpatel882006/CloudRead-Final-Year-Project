@@ -1,293 +1,285 @@
-📚 CloudRead
-Cloud-Based Digital Library Management System (MERN Stack)
-🚀 Project Overview
+# ☁️ CloudRead — Secure Cloud Digital Library
 
-CloudRead is a cloud-based digital library system built using the MERN stack.
-It provides secure, role-based, time-limited access to digital books with automated expiry, reading analytics, and administrative insights.
+![MERN](https://img.shields.io/badge/Stack-MERN-2ecc71)
+![React](https://img.shields.io/badge/Frontend-React-61DAFB)
+![Node.js](https://img.shields.io/badge/Backend-Node.js-339933)
+![MongoDB](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248)
+![JWT](https://img.shields.io/badge/Auth-JWT-orange)
+![Status](https://img.shields.io/badge/Project-Production--Ready-success)
 
-This system is designed as a Final Year B.Tech Project (Cloud Computing) and demonstrates:
+**CloudRead** is a secure, cloud-based digital library platform built on the MERN stack.
+It enables controlled, role-based access to digital books with automated expiry, analytics, and workflow-driven approvals — designed for academic institutions and scalable cloud deployments.
 
-Secure authentication
+---
 
-Role-based access control
+# 📘 Project Overview
 
-Digital resource management
+CloudRead solves a common institutional problem:
+**How do you securely distribute digital books while preventing permanent access and misuse?**
 
-Automated expiry using cron jobs
+The system introduces:
 
-Reading behavior analytics
+* Controlled access approval workflow
+* Time-restricted reading permissions
+* Secure document validation before viewing
+* Backend-driven analytics for institutional insights
+* Automated expiry to remove manual tracking
 
-Email notifications
+This makes it suitable for:
 
-Admin dashboard statistics
+* Universities
+* Digital libraries
+* Research labs
+* Training portals
 
-🏗 Tech Stack
-Backend
+---
 
-Node.js
+# 🏗️ System Architecture
 
-Express.js
+```
+React Frontend  →  Express API Layer  →  MongoDB Atlas
+        ↓                  ↓
+   Auth + UI        Business Logic
+        ↓                  ↓
+   JWT Storage       Cron Jobs + Email Service
+        ↓                  ↓
+ Secure PDF Access Validation → Google Drive File Links
+```
 
-MongoDB Atlas
+### Architecture Highlights
 
-JWT Authentication
+* Stateless JWT authentication
+* RESTful service layer
+* Database-driven access validation
+* Backend-controlled business logic
+* Scheduled automation for expiry enforcement
+* External storage integration (Google Drive)
 
-bcrypt (password hashing)
+---
 
-node-cron (auto expiry)
+# ⚙️ Backend Logic Explanation
 
-nodemailer (email notifications)
+The backend acts as the **system authority**.
 
-Frontend
+### Core Responsibilities
 
-React.js (To be integrated)
+**1. Authentication Layer**
 
-Cloud Services
+* JWT issuance after login
+* Token verification middleware
+* Role-based route protection
 
-MongoDB Atlas (Database)
+**2. Access Workflow Engine**
 
-Google Drive (PDF storage)
+* Store book request records
+* Librarian/Admin approval handling
+* Generate time-bound access windows
+* Validate permissions before PDF access
 
-Gmail SMTP (Email notifications)
+**3. Automation Engine**
 
-👥 User Roles
-👨‍🎓 Student
+* Cron job runs daily
+* Detects expired permissions
+* Revokes access automatically
+* Maintains clean database state
 
-Register / Login
+**4. Analytics Engine**
 
-View books
+* Tracks reading sessions on backend
+* Calculates:
 
-Request access
+  * Total reading duration
+  * Most accessed books
+  * Top readers
+* Provides structured admin insights
 
-Read books (if approved)
+**5. Notification Service**
 
-View access history
+* Sends approval email via Nodemailer
+* Uses Gmail App Password authentication
 
-Reading sessions tracked
+---
 
-👩‍💼 Librarian
+# 🎨 Frontend Logic Explanation
 
-Add books
+The frontend focuses on **role-driven UI rendering** and secure API interaction.
 
-View access requests
+### Responsibilities
 
-Approve / Reject requests
+* Authentication UI and token handling
+* Conditional dashboard rendering by role
+* Book browsing interface
+* Request submission flow
+* Access timer display for users
+* Admin analytics visualization
+* Secure PDF viewer routing
 
-👑 Admin
+All sensitive validation remains backend-controlled.
 
-View dashboard statistics
+---
 
-Monitor system usage
+# 👥 User Roles
 
-View analytics
+### 🎓 Student
 
-Track top readers & books
+* Browse available books
+* Request access
+* Read approved books
+* View remaining access time
 
-🔐 Authentication & Security
+### 📚 Librarian
 
-JWT-based authentication
+* Review student requests
+* Approve or reject access
+* Monitor usage
 
-Role-based route protection
+### 🛠️ Admin
 
-Password hashing using bcrypt
+* Full system control
+* View analytics dashboard
+* Track reading trends
+* Manage users and books
 
-Secure book access validation
+---
 
-Backend-controlled reading session duration
+# 🔐 Security Features
 
-Email notification on approval
+* JWT-based stateless authentication
+* bcrypt password hashing
+* Role-based API protection
+* Backend validation before every PDF access
+* Time-limited permissions stored in DB
+* Automated expiry enforcement
+* Secure environment variable handling
+* No direct file exposure (Drive links validated)
 
-📚 Core Features
-1️⃣ Book Management
+---
 
-Add / Delete books
+# 📂 Project Structure
 
-Store Google Drive PDF links
-
-Track total access count
-
-2️⃣ Access Request Workflow
-
-Student requests book
-
-Librarian approves request
-
-Access valid for 7 days
-
-Secure endpoint validates access before returning PDF
-
-3️⃣ Automated Expiry System
-
-Cron job runs daily
-
-Expired access automatically updated
-
-Prevents unauthorized access
-
-4️⃣ Reading Analytics
-
-Session-based tracking
-
-Backend calculates reading duration
-
-Multiple sessions supported
-
-Tracks:
-
-Total reading time
-
-Active readers
-
-Book engagement
-
-5️⃣ Admin Analytics Dashboard APIs
-
-Total users
-
-Total books
-
-Total access requests
-
-Active vs expired access
-
-Most accessed books
-
-Top students
-
-Total reading time
-
-6️⃣ Email Notification
-
-Sent when access is approved
-
-Uses Gmail App Password authentication
-
-📁 Backend Folder Structure
-backend/
+```
+CloudRead/
 │
-├── config/
-│ └── db.js
+├── client/                     # React Frontend
+│   ├── components/
+│   ├── pages/
+│   ├── context/
+│   └── services/
 │
-├── models/
-│ ├── User.js
-│ ├── Book.js
-│ ├── AccessRequest.js
-│ └── ReadingLog.js
+├── server/                     # Node + Express Backend
+│   ├── controllers/
+│   ├── routes/
+│   ├── models/
+│   ├── middleware/
+│   ├── cron/
+│   ├── utils/
+│   └── config/
 │
-├── controllers/
-│ ├── authController.js
-│ ├── bookController.js
-│ ├── accessController.js
-│ ├── readingController.js
-│ └── adminController.js
-│
-├── routes/
-│ ├── authRoutes.js
-│ ├── bookRoutes.js
-│ ├── accessRoutes.js
-│ ├── readingRoutes.js
-│ └── adminRoutes.js
-│
-├── middleware/
-│ ├── authMiddleware.js
-│ └── roleMiddleware.js
-│
-├── cron/
-│ └── expiryJob.js
-│
-├── utils/
-│ └── sendEmail.js
-│
-├── server.js
-└── .env
-🔄 System Workflow
-User → Login (JWT)
-↓
-Student requests book
-↓
-Librarian approves
-↓
-Access granted for 7 days
-↓
-Secure endpoint validates access
-↓
-Reading session tracked
-↓
-Cron job auto-expires access
-↓
-Admin monitors analytics
-↓
-Email notification sent
-⚙️ Environment Variables
+├── .env
+├── package.json
+└── README.md
+```
 
-Create a .env file in backend root:
+---
 
+# 🔑 Environment Variables
+
+Create a `.env` file in **server/**
+
+```
 PORT=5000
-MONGO_URI=your_mongodb_atlas_connection_string
+MONGO_URI=your_mongodb_atlas_uri
 JWT_SECRET=your_secret_key
 EMAIL_USER=your_gmail_address
 EMAIL_PASS=your_gmail_app_password
+CLIENT_URL=http://localhost:3000
+GOOGLE_DRIVE_BASE_URL=your_drive_link_prefix
+```
 
-⚠️ Use Gmail App Password, not normal Gmail password.
+---
 
-▶️ How to Run the Backend
-1️⃣ Install Dependencies
+# 🚀 How to Run Locally
+
+### 1️⃣ Clone Repository
+
+```bash
+git clone https://github.com/your-username/cloudread.git
+cd cloudread
+```
+
+### 2️⃣ Backend Setup
+
+```bash
+cd server
 npm install
-2️⃣ Start Server
 npm run dev
+```
 
-Server runs at:
+### 3️⃣ Frontend Setup
 
-http://localhost:5000
-🧠 Key Concepts Demonstrated
+```bash
+cd client
+npm install
+npm start
+```
 
-Role-Based Access Control (RBAC)
+App runs at:
 
-JWT Authentication
+```
+Frontend → http://localhost:3000
+Backend  → http://localhost:5000
+```
 
-Secure Digital Resource Access
+---
 
-Automated Expiry using Cron
+# 🎓 Academic Value
 
-Backend Session Analytics
+CloudRead demonstrates strong real-world engineering concepts:
 
-MongoDB Aggregation
+* Full-stack MERN architecture
+* Authentication design patterns
+* Access lifecycle management
+* Backend-driven analytics modeling
+* Secure document distribution
+* Cron-based automation systems
+* Role-based enterprise workflows
+* Cloud database integration
 
-Email Integration
+This makes it a **high-value academic + portfolio project** for:
 
-Cloud Database Deployment
+* Final year projects
+* Cloud computing coursework
+* Software engineering portfolios
+* Internship demonstrations
 
-🎓 Viva Explanation (Short Summary)
+---
 
-CloudRead is a role-based digital access management system that provides time-limited secure access to digital books with automated expiry, session-based reading analytics, and administrative monitoring.
+# 🔮 Future Improvements
 
-📈 Project Level
+* PDF streaming instead of static Drive links
+* Redis caching for analytics
+* WebSocket live reading timer
+* OAuth login (Google / Institution SSO)
+* Docker deployment
+* Kubernetes-ready architecture
+* Multi-institution support
+* Recommendation engine
+* Reading heatmaps & engagement graphs
 
-CloudRead demonstrates:
+---
 
-✔ Secure backend architecture
-✔ Enterprise-style workflow
-✔ Cloud integration
-✔ Automation
-✔ Analytics system
-✔ Production-ready structure
+# 👨‍💻 Development Team
 
-🚀 Future Improvements
+### 🧑‍💼 Team 
 
-Refresh tokens
+**Jayesh Patel**
 
-Swagger API documentation
+### 👥 Team Members
 
-React Admin Dashboard
+* Ashish Kumavat
+* Vishwa Solanki
+* Suraj Singh
 
-Payment integration for fines
+---
 
-File storage via AWS S3
-
-Microservices architecture
-
-👨‍💻 Developed By
-
-Jayesh Patel & Team (Ashish , Vishwa ,Suraj)
-B.Tech (Cloud Computing)
-Final Year Project
+⭐ If you found this project useful, consider starring the repository.
