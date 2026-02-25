@@ -176,4 +176,33 @@ button:hover {
   color: #374151;
 }
 
+/* =====================================
+   TOAST RESPONSIVE FIX
+===================================== */
 
+/* Default toast size */
+.Toastify__toast {
+  
+  border-radius: 12px;
+  font-size: 14px;
+  padding: 12px 16px;
+}
+
+/* Mobile Fix */
+@media (max-width: 480px) {
+
+  .Toastify__toast-container {
+    width: 90% !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    padding: 0 !important;
+    margin-top: 20px;
+  }
+
+  .Toastify__toast {
+    margin-bottom: 10px;
+    font-size: 15px;
+    text-transform: capitalize;
+    padding: 10px 14px;
+  }
+}

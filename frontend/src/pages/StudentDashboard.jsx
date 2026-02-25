@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import API from "../services/api";
 import Layout from "../components/Layout";
 import Loader from "../components/Loader";
+import { toast } from "react-toastify";
+import "../css/student.css";
 
 const StudentDashboard = () => {
   const [books, setBooks] = useState([]);
@@ -12,6 +14,7 @@ const StudentDashboard = () => {
  const fetchData = async () => {
   try {
     setLoading(true);
+    toast.info("Loading dashboard data... ⏳");
     const booksRes = await API.get("/books");
     const requestsRes = await API.get("/access/my");
 
@@ -47,18 +50,19 @@ const StudentDashboard = () => {
     setRequests(requestsRes.data);
         console.log("Updated Requests:",requestsRes.data);
         
-      alert("Access request sent!");
+      toast.success("Access request sent!");
     } catch (error) {
-      alert(error.response?.data?.message || "Request failed");
+      toast.error(error.response?.data?.message || "Request failed");
     }
   };
 
   const openBook = async (bookId) => {
     try {
       const { data } = await API.get(`/access/book/${bookId}`);
+      toast.info("Opening book... 📖");
       window.open(data.pdfLink, "_blank");
     } catch (error) {
-      alert(error.response?.data?.message || "Access denied");
+      toast.error(error.response?.data?.message || "Access denied");
     }
   };
 
@@ -171,14 +175,14 @@ return (
 
               <div className="card-actions">
                 {status === "pending" && (
-                  <button className="btn disabled" disabled>
+                  <button className="btn-pending" disabled>
                     ⏳ Pending Approval
                   </button>
                 )}
 
                 {status === "approved" && (
                   <button
-                    className="btn primary"
+                    className="btn-open"
                     onClick={() => openBook(book._id)}
                   >
                     📖 Open Book
@@ -187,7 +191,7 @@ return (
 
                 {(status === "expired" || status === "rejected") && (
                   <button
-                    className="btn primary"
+                    className="btn-retry"
                     onClick={() => requestAccess(book._id)}
                   >
                     🔄 Request Again
@@ -196,7 +200,7 @@ return (
 
                 {!status && (
                   <button
-                    className="btn primary"
+                    className="btn-request"
                     onClick={() => requestAccess(book._id)}
                   >
                     📩 Request Access

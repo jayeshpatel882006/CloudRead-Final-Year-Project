@@ -4,6 +4,7 @@ import {  useNavigate } from "react-router-dom";
 import PageWrapper from "../components/PageWrapper";
 import Layout from "../components/Layout";
 import "../css/home.css"
+import { toast } from "react-toastify";
 
 const Home = () => {
   const { user } = useContext(AuthContext);

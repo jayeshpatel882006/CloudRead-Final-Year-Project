@@ -43,7 +43,7 @@ const Login = () => {
     login(data);
     console.log(data);
     // Redirect based on role
-    toast.success(`Login successful 🎉 ${data.role}`);
+    toast.success(`Login successful 🎉 as ${data.role}`);
     if (data.role === "student") {
       navigate("/student");
     } else if (data.role === "librarian") {
