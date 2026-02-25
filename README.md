@@ -19,18 +19,18 @@ CloudRead solves a common institutional problem:
 
 The system introduces:
 
-* Controlled access approval workflow
-* Time-restricted reading permissions
-* Secure document validation before viewing
-* Backend-driven analytics for institutional insights
-* Automated expiry to remove manual tracking
+- Controlled access approval workflow
+- Time-restricted reading permissions
+- Secure document validation before viewing
+- Backend-driven analytics for institutional insights
+- Automated expiry to remove manual tracking
 
 This makes it suitable for:
 
-* Universities
-* Digital libraries
-* Research labs
-* Training portals
+- Universities
+- Digital libraries
+- Research labs
+- Training portals
 
 ---
 
@@ -48,12 +48,12 @@ React Frontend  →  Express API Layer  →  MongoDB Atlas
 
 ### Architecture Highlights
 
-* Stateless JWT authentication
-* RESTful service layer
-* Database-driven access validation
-* Backend-controlled business logic
-* Scheduled automation for expiry enforcement
-* External storage integration (Google Drive)
+- Stateless JWT authentication
+- RESTful service layer
+- Database-driven access validation
+- Backend-controlled business logic
+- Scheduled automation for expiry enforcement
+- External storage integration (Google Drive)
 
 ---
 
@@ -65,38 +65,38 @@ The backend acts as the **system authority**.
 
 **1. Authentication Layer**
 
-* JWT issuance after login
-* Token verification middleware
-* Role-based route protection
+- JWT issuance after login
+- Token verification middleware
+- Role-based route protection
 
 **2. Access Workflow Engine**
 
-* Store book request records
-* Librarian/Admin approval handling
-* Generate time-bound access windows
-* Validate permissions before PDF access
+- Store book request records
+- Librarian/Admin approval handling
+- Generate time-bound access windows
+- Validate permissions before PDF access
 
 **3. Automation Engine**
 
-* Cron job runs daily
-* Detects expired permissions
-* Revokes access automatically
-* Maintains clean database state
+- Cron job runs daily
+- Detects expired permissions
+- Revokes access automatically
+- Maintains clean database state
 
 **4. Analytics Engine**
 
-* Tracks reading sessions on backend
-* Calculates:
+- Tracks reading sessions on backend
+- Calculates:
+  - Total reading duration
+  - Most accessed books
+  - Top readers
 
-  * Total reading duration
-  * Most accessed books
-  * Top readers
-* Provides structured admin insights
+- Provides structured admin insights
 
 **5. Notification Service**
 
-* Sends approval email via Nodemailer
-* Uses Gmail App Password authentication
+- Sends approval email via Nodemailer
+- Uses Gmail App Password authentication
 
 ---
 
@@ -106,13 +106,13 @@ The frontend focuses on **role-driven UI rendering** and secure API interaction.
 
 ### Responsibilities
 
-* Authentication UI and token handling
-* Conditional dashboard rendering by role
-* Book browsing interface
-* Request submission flow
-* Access timer display for users
-* Admin analytics visualization
-* Secure PDF viewer routing
+- Authentication UI and token handling
+- Conditional dashboard rendering by role
+- Book browsing interface
+- Request submission flow
+- Access timer display for users
+- Admin analytics visualization
+- Secure PDF viewer routing
 
 All sensitive validation remains backend-controlled.
 
@@ -122,36 +122,36 @@ All sensitive validation remains backend-controlled.
 
 ### 🎓 Student
 
-* Browse available books
-* Request access
-* Read approved books
-* View remaining access time
+- Browse available books
+- Request access
+- Read approved books
+- View remaining access time
 
 ### 📚 Librarian
 
-* Review student requests
-* Approve or reject access
-* Monitor usage
+- Review student requests
+- Approve or reject access
+- Monitor usage
 
 ### 🛠️ Admin
 
-* Full system control
-* View analytics dashboard
-* Track reading trends
-* Manage users and books
+- Full system control
+- View analytics dashboard
+- Track reading trends
+- Manage users and books
 
 ---
 
 # 🔐 Security Features
 
-* JWT-based stateless authentication
-* bcrypt password hashing
-* Role-based API protection
-* Backend validation before every PDF access
-* Time-limited permissions stored in DB
-* Automated expiry enforcement
-* Secure environment variable handling
-* No direct file exposure (Drive links validated)
+- JWT-based stateless authentication
+- bcrypt password hashing
+- Role-based API protection
+- Backend validation before every PDF access
+- Time-limited permissions stored in DB
+- Automated expiry enforcement
+- Secure environment variable handling
+- No direct file exposure (Drive links validated)
 
 ---
 
@@ -236,49 +236,49 @@ Backend  → http://localhost:5000
 
 CloudRead demonstrates strong real-world engineering concepts:
 
-* Full-stack MERN architecture
-* Authentication design patterns
-* Access lifecycle management
-* Backend-driven analytics modeling
-* Secure document distribution
-* Cron-based automation systems
-* Role-based enterprise workflows
-* Cloud database integration
+- Full-stack MERN architecture
+- Authentication design patterns
+- Access lifecycle management
+- Backend-driven analytics modeling
+- Secure document distribution
+- Cron-based automation systems
+- Role-based enterprise workflows
+- Cloud database integration
 
 This makes it a **high-value academic + portfolio project** for:
 
-* Final year projects
-* Cloud computing coursework
-* Software engineering portfolios
-* Internship demonstrations
+- Final year projects
+- Cloud computing coursework
+- Software engineering portfolios
+- Internship demonstrations
 
 ---
 
 # 🔮 Future Improvements
 
-* PDF streaming instead of static Drive links
-* Redis caching for analytics
-* WebSocket live reading timer
-* OAuth login (Google / Institution SSO)
-* Docker deployment
-* Kubernetes-ready architecture
-* Multi-institution support
-* Recommendation engine
-* Reading heatmaps & engagement graphs
+- PDF streaming instead of static Drive links
+- Redis caching for analytics
+- WebSocket live reading timer
+- OAuth login (Google / Institution SSO)
+- Docker deployment
+- Kubernetes-ready architecture
+- Multi-institution support
+- Recommendation engine
+- Reading heatmaps & engagement graphs
 
 ---
 
 # 👨‍💻 Development Team
 
-### 🧑‍💼 Team 
+### 🧑‍💼 Team Lead
 
 **Jayesh Patel**
 
 ### 👥 Team Members
 
-* Ashish Kumavat
-* Vishwa Solanki
-* Suraj Singh
+- Ashish Kumavat
+- Vishwa Solanki
+- Suraj Singh
 
 ---
 

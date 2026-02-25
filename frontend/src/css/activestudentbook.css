@@ -35,3 +35,17 @@
   justify-content: center;
   font-weight: 600;
 }
+
+.back-btn {
+  background: rgba(37, 99, 235, 0.1);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  color: #2563eb;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.back-btn:hover {
+  background: rgba(37, 99, 235, 0.2);
+}

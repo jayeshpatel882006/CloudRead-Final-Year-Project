@@ -23,12 +23,27 @@ export const addBook = async (req, res) => {
 // 📌 Get All Books
 export const getAllBooks = async (req, res) => {
   try {
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 6;
+    // console.log(limit);
+
+    const skip = (page - 1) * limit;
+
+    const totalBooks = await Book.countDocuments();
+
     const books = await Book.find()
-      .select("-pdfLink")
-      .populate("uploadedBy", "name role");
-    res.json(books);
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    res.json({
+      books,
+      currentPage: page,
+      totalPages: Math.ceil(totalBooks / limit),
+      totalBooks,
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 

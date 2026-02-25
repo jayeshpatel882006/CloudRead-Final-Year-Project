@@ -3,45 +3,43 @@ import API from "../services/api";
 import Layout from "../components/Layout";
 import Loader from "../components/Loader";
 import { toast } from "react-toastify";
+import AccessCountdown from "../components/AccessCountdown";
 import "../css/student.css";
 
 const StudentDashboard = () => {
   const [books, setBooks] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
- const fetchData = async () => {
+
+
+  fetchBooks(1);
+}, []);
+ const fetchBooks = async (page =1) => {
   try {
     setLoading(true);
-    toast.info("Loading dashboard data... ⏳");
-    const booksRes = await API.get("/books");
+    const tost = toast.loading("Please wait...");
+    // toast.info("Loading dashboard data... ⏳",{autoClose:500});
+    // const booksRes = await API.get("/books");
     const requestsRes = await API.get("/access/my");
-
-    setBooks(booksRes.data);
+    
+    const res = await API.get(`/books?page=${page}&limit=3`);
+    // console.log(res.data);
+    
+    setBooks(res.data.books);
+    setCurrentPage(res.data.currentPage);
+    setTotalPages(res.data.totalPages);
     setRequests(requestsRes.data);
+    toast.update(tost,{render:"Dashboard loaded! 🎉",  type: "success",isLoading: false, autoClose: 2000 });
   } catch (error) {
     console.log(error.response?.data || error.message);
   } finally {
     setLoading(false);
   }
 };
-
-  fetchData();
-}, []);
-//   useEffect(() => {
-//     const fetchBooks = async () => {
-//       try {
-//         const { data } = await API.get("/books");
-//         setBooks(data);
-//       } catch (error) {
-//         console.log(error.response?.data || error.message);
-//       }
-//     };
-
-//     fetchBooks();
-//   }, []);
-
   const requestAccess = async (bookId) => {
     try {
       await API.post("/access", { bookId });
@@ -85,63 +83,6 @@ const StudentDashboard = () => {
   return bookRequests[0].status;
 };
 
-// if (loading) {
-//   return (
-//     <Layout>
-//        <Loader />
-//     </Layout>
-//   );
-// }
-
-//   return (
-
-//     <Layout>
-//       <h2>📚 Student Dashboard</h2>
-      
-
-//       {books.map((book) =>{
-//         const status = getBookStatus(book._id);
-        
-//         return(
-//         <div
-//           key={book._id} className="card"
-//           style={{
-//             border: "1px solid #ccc",
-//             padding: "15px",
-//             marginBottom: "10px",
-//           }}
-//         >
-//           <h3>{book.title}</h3>
-//           <p>Author: {book.author}</p>
-//           <p>Category: {book.category}</p>
-//          {status && (
-//   <span className={`status ${status}`}>
-//     {status.toUpperCase()}
-//   </span>
-// )}
-
-// {status === "pending" && (
-//   <button disabled>⏳ Pending Approval</button>
-// )}
-
-// {status === "approved" && (
-//   <button style={{ backgroundColor: "#4f46e5", color: "white" }} onClick={() => openBook(book._id)}>
-//     📖 Open Book
-//   </button>
-// )}
-
-// {status === "expired" || status === "rejected" && (
-//   <button style={{ backgroundColor: "#4f46e5", color: "white" }} onClick={() => requestAccess(book._id)}>
-//     🔄 Request Again
-//   </button>
-// )}
-//         </div>
-//       ) })}
-//     {/* </div> */}
-//     </Layout>
-
-//   );
-// };
 if (loading) {
   return (
     <Layout>
@@ -181,13 +122,13 @@ return (
                 )}
 
                 {status === "approved" && (
-                  <button
-                    className="btn-open"
-                    onClick={() => openBook(book._id)}
-                  >
-                    📖 Open Book
-                  </button>
-                )}
+  <>
+    <AccessCountdown bookId={book._id} />
+    <button className="btn-open" onClick={() => openBook(book._id)}>
+      📖 Open Book
+    </button>
+  </>
+)}
 
                 {(status === "expired" || status === "rejected") && (
                   <button
@@ -210,7 +151,27 @@ return (
             </div>
           );
         })}
+        
       </div>
+      <div className="pagination">
+  <button
+    disabled={currentPage === 1}
+    onClick={() => fetchBooks(currentPage - 1)}
+  >
+    ← Prev
+  </button>
+
+  <span>
+    Page {currentPage} of {totalPages}
+  </span>
+
+  <button
+    disabled={currentPage === totalPages}
+    onClick={() => fetchBooks(currentPage + 1)}
+  >
+    Next →
+  </button>
+</div>
     </div>
   </Layout>
 );

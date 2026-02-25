@@ -4,6 +4,10 @@ import {
   getMostAccessedBooks,
   getTopStudents,
   getActiveStudentsForBook,
+  getAllUsers,
+  updateUserRole,
+  deleteUser,
+  toggleBlockUser,
 } from "../controllers/adminController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -28,6 +32,19 @@ router.get(
   protect,
   authorizeRoles("librarian", "admin"),
   getActiveStudentsForBook,
+);
+
+router.get("/users", protect, authorizeRoles("admin"), getAllUsers);
+
+router.put("/users/:id/role", protect, authorizeRoles("admin"), updateUserRole);
+
+router.delete("/users/:id", protect, authorizeRoles("admin"), deleteUser);
+
+router.put(
+  "/users/:id/block",
+  protect,
+  authorizeRoles("admin"),
+  toggleBlockUser,
 );
 
 export default router;

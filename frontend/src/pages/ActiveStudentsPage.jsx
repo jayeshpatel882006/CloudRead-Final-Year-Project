@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams ,useNavigate} from "react-router-dom";
 import API from "../services/api";
 import Layout from "../components/Layout";
 import "../css/activestudentbook.css";
@@ -8,11 +8,14 @@ const ActiveStudentsPage = () => {
   const { bookId } = useParams();
   const [students, setStudents] = useState([]);
   const [bookTitle, setBookTitle] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchActiveStudents = async () => {
       try {
         const { data } = await API.get(`/admin/book-active/${bookId}`);
+        // console.log(data);
+        
         setStudents(data);
 
         if (data.length > 0) {
@@ -29,6 +32,12 @@ const ActiveStudentsPage = () => {
   return (
     <Layout>
       <div className="active-page-container">
+      <button
+  className="back-btn"
+  onClick={() => navigate("/librarian")}
+>
+  ← Back
+</button>
 
         <h2>Active Students</h2>
         <p className="active-count">
@@ -37,15 +46,15 @@ const ActiveStudentsPage = () => {
 
         <div className="students-grid">
           {students.length > 0 ? (
-            students.map((item) => (
+            students?.map((item) => (
               <div key={item._id} className="student-card">
                 <div className="student-avatar">
-                  {item.user.name.charAt(0).toUpperCase()}
+                  {item?.user?.name?.charAt(0).toUpperCase()}
                 </div>
 
                 <div className="student-info">
-                  <h4>{item.user.name}</h4>
-                  <p>{item.user.email}</p>
+                  <h4>{item?.user.name}</h4>
+                  <p>{item?.user.email}</p>
                   <span>
                     Expires: {new Date(item.accessEndDate).toLocaleDateString("en-GB")}
                   </span>

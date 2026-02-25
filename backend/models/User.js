@@ -25,9 +25,17 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true },
 );
+
+userSchema.pre("deleteOne", { document: true }, async function () {
+  await AccessRequest.deleteMany({ user: this._id });
+});
 
 const User = mongoose.model("User", userSchema);
 

@@ -66,3 +66,174 @@
   justify-content: center;
   overflow-x: auto;
 }
+
+/* =====================================
+   USER MANAGEMENT SECTION
+===================================== */
+
+.user-section {
+  margin-top: 60px;
+}
+
+.user-section h3 {
+  margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+/* Table Wrapper */
+
+.admin-table-wrapper {
+  overflow-x: auto;
+  background: var(--card-bg);
+  border-radius: 16px;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.05);
+}
+
+/* Table */
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 16px;
+  text-align: left;
+  font-size: 14px;
+}
+
+.admin-table th {
+  font-weight: 600;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.admin-table tbody tr {
+  border-top: 1px solid var(--border-color);
+  transition: 0.2s ease;
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(37, 99, 235, 0.05);
+}
+
+/* Role Dropdown */
+
+.role-select {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  font-size: 13px;
+  background: white;
+}
+
+/* Status Badge */
+
+.status-badge {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.status-badge.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.status-badge.blocked {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Action Buttons */
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-block {
+  background: #f59e0b;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-block:hover {
+  background: #d97706;
+}
+
+.btn-delete {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #dc2626;
+}
+.pagination {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+}
+
+.pagination button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.pagination button:disabled {
+  background: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* =====================================
+   USER MANAGEMENT HEADER
+===================================== */
+
+.user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.user-header h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* Count Badge */
+
+.user-count-badge {
+  background: rgba(37, 99, 235, 0.1);
+color: #2563eb;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
+  transition: 0.3s ease;
+}
+
+.user-count-badge:hover {
+  transform: translateY(-2px);
+}
