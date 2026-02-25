@@ -58,3 +58,25 @@ export const getTopStudents = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+export const getActiveStudentsForBook = async (req, res) => {
+  try {
+    const { bookId } = req.params;
+
+    const now = new Date();
+
+    const activeStudents = await AccessRequest.find({
+      book: bookId,
+      status: "approved",
+      accessStartDate: { $lte: now },
+      accessEndDate: { $gte: now },
+    })
+      .populate("user", "name email")
+      .select("user accessStartDate accessEndDate");
+    // console.log(activeStudents);
+
+    res.json(activeStudents);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error" });
+  }
+};

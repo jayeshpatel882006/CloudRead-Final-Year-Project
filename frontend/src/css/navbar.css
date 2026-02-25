@@ -1,4 +1,6 @@
-/* ===== Navbar ===== */
+/* =====================================
+   Enhanced Premium CloudRead Navbar
+===================================== */
 
 .navbar {
   position: sticky;
@@ -9,80 +11,131 @@
   justify-content: space-between;
   align-items: center;
 
-  padding: 15px 40px;
+  padding: 18px 60px;
 
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.8);
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.95),
+    rgba(79, 70, 229, 0.95)
+  );
 
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(14px);
+
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.15),
+    0 0 40px rgba(79, 70, 229, 0.15);
+
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+  transition: all 0.3s ease;
 }
 
 /* ===== Logo ===== */
 
 .logo {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
   cursor: pointer;
-
-  background: linear-gradient(90deg, #2563eb, #4f46e5);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: white;
+  letter-spacing: 0.8px;
+  transition: all 0.3s ease;
 }
 
-/* ===== Right Section ===== */
+.logo:hover {
+  transform: scale(1.08);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+}
 
-.nav-right {
+/* ===== Right Side ===== */
+
+.nav-links {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 28px;
 }
 
-/* Role Badge */
-
-.role-badge {
-  font-size: 13px;
-  background: #eef2ff;
-  color: #4338ca;
-  padding: 5px 10px;
-  border-radius: 20px;
-  text-transform: capitalize;
-}
-
-/* Nav Buttons */
+/* ===== Nav Buttons ===== */
 
 .nav-btn {
   background: transparent;
   border: none;
+  color: white;
   font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  color: #374151;
-  padding: 6px 12px;
-  border-radius: 6px;
-  transition: 0.2s ease;
+  position: relative;
+  padding: 6px 6px;
+  transition: all 0.3s ease;
+}
+
+/* Animated underline */
+
+.nav-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0%;
+  height: 2px;
+  background: linear-gradient(90deg, white, #e0e7ff);
+  transition: width 0.3s ease;
+  border-radius: 4px;
+}
+
+.nav-btn:hover::after {
+  width: 100%;
 }
 
 .nav-btn:hover {
-  background: #f1f5f9;
-  color: #2563eb;
+  opacity: 0.95;
+  transform: translateY(-2px);
 }
 
-.nav-btn.active {
-  background: #2563eb;
+/* ===== Role Badge ===== */
+
+.role-badge {
+  background: rgba(255, 255, 255, 0.18);
+  padding: 7px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  text-transform: capitalize;
   color: white;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
-/* Logout */
+/* ===== Dashboard Button ===== */
+
+.nav-dashboard {
+  background: white;
+  color: #2563eb;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+}
+
+.nav-dashboard:hover {
+  background: #f1f5f9;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(255, 255, 255, 0.4);
+}
+
+/* ===== Logout Button ===== */
 
 .logout-btn {
-  background: #2563eb;
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   color: white;
-  border: none;
-  padding: 6px 14px;
-  border-radius: 6px;
+  padding: 7px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .logout-btn:hover {
-  background: #1d4ed8;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.25);
 }

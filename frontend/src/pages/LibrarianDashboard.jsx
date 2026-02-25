@@ -3,10 +3,15 @@ import API from "../services/api";
 import Layout from "../components/Layout";
 import PageWrapper from "../components/PageWrapper";
 import "../css/libraryan.css";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
+
 
 const LibrarianDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [books, setBooks] = useState([]);
+  const [activeStudents, setActiveStudents] = useState({});
+  const [expandedBook, setExpandedBook] = useState(null);
   const [formData, setFormData] = useState({
     title: "",
     author: "",
@@ -14,6 +19,7 @@ const LibrarianDashboard = () => {
     description: "",
     pdfLink: "",
   });
+  const navigate = useNavigate();
 
   const fetchData = async () => {
     try {
@@ -34,18 +40,20 @@ const LibrarianDashboard = () => {
   const approveRequest = async (id) => {
     try {
       await API.put(`/access/approve/${id}`);
+      toast.success("Request approved!");
       fetchData();
     } catch (error) {
-      alert(error.response?.data?.message || "Approval failed");
+      toast.error(error.response?.data?.message || "Approval failed");
     }
   };
 
   const rejectRequest = async (id) => {
   try {
     await API.put(`/access/reject/${id}`);
+    toast.success("Request rejected!");
     fetchData();
   } catch (error) {
-    alert("Rejection failed");
+    toast.error(error.response?.data?.message || "Rejection failed");
   }
 };
 
@@ -60,11 +68,33 @@ const LibrarianDashboard = () => {
         description: "",
         pdfLink: "",
       });
+      toast.success("Book added successfully!");
       fetchData();
     } catch (error) {
-      alert("Book creation failed");
+      toast.error("Book creation failed");
     }
   };
+
+  const fetchActiveStudents = async (bookId) => {
+     // 🔁 If same book clicked → close it
+  if (expandedBook === bookId) {
+    setExpandedBook(null);
+    return;
+  }
+  try {
+    const { data } = await API.get(`/admin/book-active/${bookId}`);
+
+    setActiveStudents(prev => ({
+      ...prev,
+      [bookId]: data
+    }));
+    // console.log(bookId);
+    
+    setExpandedBook(bookId);
+  } catch (error) {
+    console.log(error);
+  }
+};
 
  
 return (
@@ -168,12 +198,44 @@ return (
           <div className="books-grid">
             {books.map((book) => (
               <div key={book._id} className="book-card-modern">
-                <h4>{book.title}</h4>
-                <p>{book.author}</p>
-                <span className="category-tag">
-                  {book.category}
-                </span>
-              </div>
+  <h4>{book.title}</h4>
+  <p>{book.author}</p>
+
+  <button
+    className="view-active-btn"
+    onClick={() => navigate(`/librarian/book/${book._id}/active`)}
+  >
+     {expandedBook === book._id
+    ? "Hide Active Students"
+    : "View Active Students"}
+  </button>
+
+  {expandedBook === book._id && (
+  <div className="active-students-list">
+    {activeStudents[book._id]?.length > 0 ? (
+      activeStudents[book._id].map((item) => (
+        <div key={item._id} className="student-card">
+
+          <div className="student-avatar">
+            {item.user.name.charAt(0).toUpperCase()}
+          </div>
+
+          <div className="student-info">
+            <h5>{item.user.name}</h5>
+            <p>{item.user.email}</p>
+            <span className="access-date">
+              Expires: {new Date(item.accessEndDate).toLocaleDateString("en-GB")}
+            </span>
+          </div>
+
+        </div>
+      ))
+    ) : (
+      <p className="empty-text">No active students</p>
+    )}
+  </div>
+)}
+</div>
             ))}
           </div>
         </div>

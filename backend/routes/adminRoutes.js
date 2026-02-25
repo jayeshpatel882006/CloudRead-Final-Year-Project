@@ -3,6 +3,7 @@ import {
   getDashboardStats,
   getMostAccessedBooks,
   getTopStudents,
+  getActiveStudentsForBook,
 } from "../controllers/adminController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -21,5 +22,12 @@ router.get(
 );
 
 router.get("/top-students", protect, authorizeRoles("admin"), getTopStudents);
+
+router.get(
+  "/book-active/:bookId",
+  protect,
+  authorizeRoles("librarian", "admin"),
+  getActiveStudentsForBook,
+);
 
 export default router;

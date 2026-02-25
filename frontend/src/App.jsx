@@ -10,15 +10,26 @@ import { useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import ActiveStudentsPage from "./pages/ActiveStudentsPage";
+import PublicRoute from "./components/PublicRoute";
+import ScrollToTop from "./components/ScrollToTop";
 
 function App() {
   const location = useLocation();
   return (
     <>
+    <ScrollToTop />
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+          } />
+        <Route path="/register" element={
+          <PublicRoute>
+            <Register />
+          </PublicRoute>} />
         <Route path="/" element={<Home />} />
         <Route
           path="/student"
@@ -27,6 +38,14 @@ function App() {
               <StudentDashboard />
              </ProtectedRoute>
           }
+        />
+        <Route
+        path="/librarian/book/:bookId/active"
+         element={
+         <ProtectedRoute role="librarian">
+          <ActiveStudentsPage />
+          </ProtectedRoute>
+        } 
         />
 
         <Route
