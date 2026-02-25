@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../services/api";
 import Layout from "../components/Layout";
-import { ClipLoader } from "react-spinners";
 import Loader from "../components/Loader";
 
 const StudentDashboard = () => {
