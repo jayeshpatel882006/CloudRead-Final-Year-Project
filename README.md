@@ -270,15 +270,7 @@ This makes it a **high-value academic + portfolio project** for:
 
 # 👨‍💻 Development Team
 
-### 🧑‍💼 Team Lead
-
 **Jayesh Patel**
-
-### 👥 Team Members
-
-- Ashish Kumavat
-- Vishwa Solanki
-- Suraj Singh
 
 ---
 
