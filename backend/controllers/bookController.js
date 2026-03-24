@@ -36,6 +36,8 @@ export const getAllBooks = async (req, res) => {
       .limit(limit)
       .sort({ createdAt: -1 });
 
+    // console.log(books);
+
     res.json({
       books,
       currentPage: page,

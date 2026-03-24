@@ -86,7 +86,7 @@ export const getMyRequests = async (req, res) => {
 // 📌 Get All Requests (Librarian/Admin)
 export const getAllRequests = async (req, res) => {
   try {
-    const requests = await AccessRequest.find()
+    const requests = await AccessRequest.find({ status: "pending" })
       .populate("user", "name email")
       .populate("book", "title");
 
