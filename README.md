@@ -160,13 +160,13 @@ All sensitive validation remains backend-controlled.
 ```
 CloudRead/
 │
-├── client/                     # React Frontend
+├── frontend/                     # React Frontend
 │   ├── components/
 │   ├── pages/
 │   ├── context/
 │   └── services/
 │
-├── server/                     # Node + Express Backend
+├── backend/                     # Node + Express Backend
 │   ├── controllers/
 │   ├── routes/
 │   ├── models/
@@ -184,7 +184,7 @@ CloudRead/
 
 # 🔑 Environment Variables
 
-Create a `.env` file in **server/**
+Create a `.env` file in **backend/**
 
 ```
 PORT=5000
@@ -210,7 +210,7 @@ cd cloudread
 ### 2️⃣ Backend Setup
 
 ```bash
-cd server
+cd backend
 npm install
 npm run dev
 ```
@@ -218,7 +218,7 @@ npm run dev
 ### 3️⃣ Frontend Setup
 
 ```bash
-cd client
+cd frontend
 npm install
 npm start
 ```
