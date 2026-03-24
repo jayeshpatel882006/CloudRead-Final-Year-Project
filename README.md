@@ -203,7 +203,7 @@ GOOGLE_DRIVE_BASE_URL=your_drive_link_prefix
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/your-username/cloudread.git
+git clone https://github.com/jayeshpatel882006/CloudRead-Final-Year-Project.git
 cd cloudread
 ```
 
