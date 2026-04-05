@@ -46,7 +46,7 @@ const [totalPages, setTotalPages] = useState(1);
       // 🔥 Refetch updated requests
     const requestsRes = await API.get("/access/my");
     setRequests(requestsRes.data);
-        console.log("Updated Requests:",requestsRes.data);
+        // console.log("Updated Requests:",requestsRes.data);
         
       toast.success("Access request sent!");
     } catch (error) {
