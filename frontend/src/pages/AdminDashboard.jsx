@@ -53,7 +53,7 @@ const AdminDashboard = () => {
 
   const refreshUsers = async () => {
   const usersRes = await API.get("/admin/users");
-  setUsers(usersRes.data);
+  setUsers(usersRes.data.users);
 };
 
 const updateRole = async (id, role) => {
@@ -64,8 +64,8 @@ toast.success(data.message || "Role updated successfully");
 
 const toggleBlock = async (id) => {
   await API.put(`/admin/users/${id}/block`);
-  toast.success("User status updated successfully");
   refreshUsers();
+  toast.success("User status updated successfully");
 };
 
 const deleteUser = async (id) => {
@@ -150,7 +150,7 @@ const deleteUser = async (id) => {
       </thead>
 
       <tbody>
-        {users.map((user) => (
+        {users?.map((user) => (
           <tr key={user._id}>
             <td>{user.name}</td>
             <td>{user.email}</td>

@@ -27,7 +27,7 @@ const [totalPages, setTotalPages] = useState(1);
     const requestsRes = await API.get("/access/my");
     
     const res = await API.get(`/books?page=${page}&limit=3`);
-    // console.log(res.data);
+    console.log(res.data);
     
     setBooks(res.data.books);
     setCurrentPage(res.data.currentPage);

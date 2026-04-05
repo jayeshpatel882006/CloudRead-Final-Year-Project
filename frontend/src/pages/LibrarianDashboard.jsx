@@ -25,10 +25,15 @@ const LibrarianDashboard = () => {
     try {
       const requestsRes = await API.get("/access");
       const booksRes = await API.get("/books");
-
-      setRequests(requestsRes.data);
-      setBooks(booksRes.data);
+      // console.log(booksRes.data);
+      // console.log(requestsRes.data);
+      
+      setRequests(requestsRes.data);  
+      setBooks(booksRes.data.books);
     } catch (error) {
+      console.log("This Errorr");
+      console.log(error);
+      
       console.log(error.response?.data || error.message);
     }
   };
@@ -43,6 +48,8 @@ const LibrarianDashboard = () => {
       toast.success("Request approved!");
       fetchData();
     } catch (error) {
+      console.log(error.response);
+      
       toast.error(error.response?.data?.message || "Approval failed");
     }
   };
@@ -101,7 +108,6 @@ return (
   <Layout>
     <PageWrapper>
       <div className="librarian-container">
-
         <h2 className="dashboard-title">Librarian Dashboard</h2>
 
         {/* Add Book Section */}
@@ -196,7 +202,7 @@ return (
           <h3>All Books</h3>
 
           <div className="books-grid">
-            {books.map((book) => (
+            {books?.map((book) =>(
               <div key={book._id} className="book-card-modern">
   <h4>{book.title}</h4>
   <p>{book.author}</p>
@@ -210,7 +216,7 @@ return (
     : "View Active Students"}
   </button>
 
-  {expandedBook === book._id && (
+  {/* {expandedBook === book._id && (
   <div className="active-students-list">
     {activeStudents[book._id]?.length > 0 ? (
       activeStudents[book._id].map((item) => (
@@ -234,7 +240,7 @@ return (
       <p className="empty-text">No active students</p>
     )}
   </div>
-)}
+)} */}
 </div>
             ))}
           </div>
