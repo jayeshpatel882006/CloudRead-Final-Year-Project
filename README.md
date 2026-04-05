@@ -160,13 +160,13 @@ All sensitive validation remains backend-controlled.
 ```
 CloudRead/
 │
-├── client/                     # React Frontend
+├── frontend/                     # React Frontend
 │   ├── components/
 │   ├── pages/
 │   ├── context/
 │   └── services/
 │
-├── server/                     # Node + Express Backend
+├── backend/                     # Node + Express Backend
 │   ├── controllers/
 │   ├── routes/
 │   ├── models/
@@ -184,7 +184,7 @@ CloudRead/
 
 # 🔑 Environment Variables
 
-Create a `.env` file in **server/**
+Create a `.env` file in **backend/**
 
 ```
 PORT=5000
@@ -203,14 +203,14 @@ GOOGLE_DRIVE_BASE_URL=your_drive_link_prefix
 ### 1️⃣ Clone Repository
 
 ```bash
-git clone https://github.com/your-username/cloudread.git
+git clone https://github.com/jayeshpatel882006/CloudRead-Final-Year-Project.git
 cd cloudread
 ```
 
 ### 2️⃣ Backend Setup
 
 ```bash
-cd server
+cd backend
 npm install
 npm run dev
 ```
@@ -218,7 +218,7 @@ npm run dev
 ### 3️⃣ Frontend Setup
 
 ```bash
-cd client
+cd frontend
 npm install
 npm start
 ```
