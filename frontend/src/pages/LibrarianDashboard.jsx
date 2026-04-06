@@ -43,14 +43,15 @@ const LibrarianDashboard = () => {
   }, []);
 
   const approveRequest = async (id) => {
+    const tost = toast.loading("Approving request...");
     try {
       await API.put(`/access/approve/${id}`);
-      toast.success("Request approved!");
       fetchData();
+      toast.update(tost,{render:"Request approved!",  type: "success",isLoading: false, autoClose: 2000 });
     } catch (error) {
       console.log(error.response);
-      
-      toast.error(error.response?.data?.message || "Approval failed");
+      toast.update(tost,{render:error.response?.data?.message || "Approval failed",  type: "error",isLoading: false, autoClose: 2000 });
+      // toast.error(error.response?.data?.message || "Approval failed");
     }
   };
 
