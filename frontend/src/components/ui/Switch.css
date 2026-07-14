@@ -1,0 +1,92 @@
+.cr-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  user-select: none;
+}
+
+.cr-switch--disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cr-switch__track {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 40px;
+  height: 22px;
+  background: var(--linen-300);
+  border-radius: var(--radius-full);
+  transition: background-color var(--duration-base) var(--ease-standard);
+  flex-shrink: 0;
+}
+
+.cr-switch--sm .cr-switch__track { width: 32px; height: 18px; }
+.cr-switch--lg .cr-switch__track { width: 48px; height: 26px; }
+
+.cr-switch__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.cr-switch__thumb {
+  position: absolute;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: var(--linen-0);
+  border-radius: var(--radius-full);
+  box-shadow: 0 1px 2px rgba(31, 26, 46, 0.2);
+  transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.cr-switch--sm .cr-switch__thumb { width: 14px; height: 14px; }
+.cr-switch--lg .cr-switch__thumb { width: 22px; height: 22px; }
+
+.cr-switch__input:checked ~ .cr-switch__thumb {
+  transform: translateX(18px);
+}
+.cr-switch--sm .cr-switch__input:checked ~ .cr-switch__thumb {
+  transform: translateX(14px);
+}
+.cr-switch--lg .cr-switch__input:checked ~ .cr-switch__thumb {
+  transform: translateX(22px);
+}
+
+.cr-switch__input:checked + .cr-switch__track,
+.cr-switch__input:checked ~ .cr-switch__thumb,
+.cr-switch__track:has(.cr-switch__input:checked) {
+  /* parent accent applied via :has */
+}
+
+.cr-switch__track:has(.cr-switch__input:checked) {
+  background: var(--color-primary);
+}
+
+.cr-switch__input:focus-visible ~ .cr-switch__thumb {
+  box-shadow: 0 0 0 4px var(--color-primary-tint);
+}
+
+.cr-switch__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-switch__label {
+  font-size: var(--text-body-md);
+  color: var(--color-text);
+}
+
+.cr-switch__helper {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+}

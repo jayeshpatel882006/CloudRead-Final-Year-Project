@@ -1,0 +1,117 @@
+.cr-topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--layout-topbar-h);
+  padding: 0 var(--space-6);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  font-family: var(--font-sans);
+  backdrop-filter: saturate(140%) blur(8px);
+}
+
+.cr-topbar__left,
+.cr-topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-shrink: 0;
+}
+
+.cr-topbar__right { margin-left: auto; }
+
+.cr-topbar__center {
+  flex: 1;
+  max-width: 520px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-topbar__menu {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.cr-topbar__title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-md);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.cr-topbar__search {
+  width: 100%;
+}
+
+.cr-topbar__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard),
+              color var(--duration-fast) var(--ease-standard);
+}
+
+.cr-topbar__icon:hover {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.cr-topbar__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 4px 12px 4px 4px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  color: var(--color-text);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.cr-topbar__user:hover {
+  background: var(--color-primary-tint);
+}
+
+.cr-topbar__user-name {
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+
+@media (max-width: 768px) {
+  .cr-topbar {
+    padding: 0 var(--space-4);
+  }
+  .cr-topbar__menu {
+    display: inline-flex;
+  }
+  .cr-topbar__center {
+    display: none;
+  }
+  .cr-topbar__user-name {
+    display: none;
+  }
+}

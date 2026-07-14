@@ -52,13 +52,10 @@ function PageCanvas({ bookId, pageNum, zoom = 100 }) {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(bitmap, 0, 0);
 
-    // Apply CSS zoom via scale transform on the wrapper
-    const wrapper = canvas.closest("[data-page-wrapper]");
-    if (wrapper) {
-      wrapper.style.width = `${zoom}%`;
-      wrapper.style.maxWidth = `${zoom}%`;
-    }
-  }, [zoom]);
+    // Zoom is handled via CSS variable on the page wrapper —
+    // the .reader-page-wrapper always stays 100% width with
+    // justify-content: center, so the page naturally stays centered.
+  }, []); // zoom is handled via inline style on .reader-page, not here
 
   // ── Fetch page data ───────────────────────────────────────────
   const fetchOnce = useCallback(async () => {
@@ -215,9 +212,10 @@ function PageCanvas({ bookId, pageNum, zoom = 100 }) {
     <div
       className="reader-page-wrapper"
       data-page-wrapper
-      style={{ width: `${zoom}%`, maxWidth: `${zoom}%` }}
     >
-      <div className={`reader-page ${status === "loaded" ? "reader-page-appear" : ""}`}>
+      <div
+        className={`reader-page ${status === "loaded" ? "reader-page-appear" : ""}`}
+        style={{ width: `${zoom}%`, maxWidth: `${zoom}%` }}>
         {/* Canvas — mounted always for stable ref */}
         <canvas
           ref={canvasRef}

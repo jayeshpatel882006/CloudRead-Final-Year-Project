@@ -1,0 +1,319 @@
+/* ─────────────────────────────────────────────────────────────────────
+   Active Reading Card
+   A premium card for approved books showing time remaining,
+   access progress, and urgency via a color-coded border + accents.
+   ───────────────────────────────────────────────────────────────────── */
+
+.cr-arc {
+  display: flex;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border-radius: var(--radius-2xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: box-shadow 0.3s var(--ease-standard),
+              transform 0.3s var(--ease-standard),
+              border-color 0.4s var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+.cr-arc::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s var(--ease-standard);
+  pointer-events: none;
+}
+
+.cr-arc:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.06);
+}
+
+.cr-arc:hover::before {
+  opacity: 1;
+}
+
+/* ── Urgency border colors ──────────────────────────────────────────── */
+
+.cr-arc--healthy {
+  border-color: var(--color-success-border, rgba(63, 133, 89, 0.25));
+}
+.cr-arc--healthy::before {
+  background: linear-gradient(135deg,
+    rgba(63, 133, 89, 0.03) 0%,
+    transparent 60%
+  );
+}
+
+.cr-arc--soon {
+  border-color: var(--color-warning-border, rgba(210, 152, 48, 0.3));
+}
+.cr-arc--soon::before {
+  background: linear-gradient(135deg,
+    rgba(210, 152, 48, 0.04) 0%,
+    transparent 60%
+  );
+}
+
+.cr-arc--critical {
+  border-color: var(--color-danger-border, rgba(165, 58, 58, 0.25));
+}
+.cr-arc--critical::before {
+  background: linear-gradient(135deg,
+    rgba(165, 58, 58, 0.04) 0%,
+    transparent 60%
+  );
+}
+
+.cr-arc--expired {
+  border-color: var(--color-border);
+  opacity: 0.75;
+}
+.cr-arc--expired::before {
+  background: linear-gradient(135deg,
+    rgba(0, 0, 0, 0.02) 0%,
+    transparent 60%
+  );
+}
+
+/* ── Cover ──────────────────────────────────────────────────────────── */
+
+.cr-arc__cover {
+  flex-shrink: 0;
+  width: 96px;
+  height: 132px;
+}
+
+.cr-arc__cover-img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+}
+
+/* ── Body ───────────────────────────────────────────────────────────── */
+
+.cr-arc__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cr-arc__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.cr-arc__titles {
+  min-width: 0;
+  flex: 1;
+}
+
+.cr-arc__title {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: var(--text-body-base);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cr-arc__author {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Meta row (time remaining + expiry date) ────────────────────────── */
+
+.cr-arc__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.cr-arc__time,
+.cr-arc__date {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  font-size: var(--text-body-sm);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.cr-arc__time svg,
+.cr-arc__date svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.cr-arc__date {
+  color: var(--color-text-muted);
+}
+
+/* ── Time remaining colors ──────────────────────────────────────────── */
+
+.cr-arc__time--healthy {
+  color: var(--color-success-text, #2d6a4f);
+}
+
+.cr-arc__time--soon {
+  color: var(--color-warning-text, #b8860b);
+}
+
+.cr-arc__time--critical {
+  color: var(--color-danger-text, #a53a3a);
+}
+
+.cr-arc__time--expired {
+  color: var(--color-text-muted);
+}
+
+/* ── Progress bar ───────────────────────────────────────────────────── */
+
+.cr-arc__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cr-arc__progress-track {
+  width: 100%;
+  height: 5px;
+  border-radius: 99px;
+  background: var(--color-bg-muted, rgba(0, 0, 0, 0.06));
+  overflow: hidden;
+}
+
+.cr-arc__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  transition: width 0.6s var(--ease-standard);
+}
+
+.cr-arc__bar--healthy {
+  background: var(--color-success, #3f8559);
+}
+
+.cr-arc__bar--soon {
+  background: var(--color-warning, #d29830);
+}
+
+.cr-arc__bar--critical {
+  background: var(--color-danger, #a53a3a);
+}
+
+.cr-arc__bar--expired {
+  background: var(--color-text-muted);
+}
+
+.cr-arc__progress-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-body-xs);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.cr-arc__progress-label svg {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+}
+
+/* ── Warning banner ─────────────────────────────────────────────────── */
+
+.cr-arc__warning {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1-5);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-xs);
+  font-weight: 500;
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.cr-arc__warning svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.cr-arc__warning--soon {
+  background: rgba(210, 152, 48, 0.1);
+  color: var(--color-warning-text, #b8860b);
+}
+
+.cr-arc__warning--critical {
+  background: rgba(165, 58, 58, 0.1);
+  color: var(--color-danger-text, #a53a3a);
+}
+
+/* ── Actions ────────────────────────────────────────────────────────── */
+
+.cr-arc__actions {
+  margin-top: var(--space-1);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .cr-arc {
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .cr-arc__cover {
+    width: 100%;
+    height: 160px;
+  }
+
+  .cr-arc__cover-img {
+    width: 100%;
+    height: 100%;
+  }
+
+  .cr-arc__header {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .cr-arc__meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+
+  .cr-arc__warning {
+    width: 100%;
+  }
+
+  .cr-arc__actions {
+    width: 100%;
+  }
+
+  .cr-arc__actions button {
+    width: 100%;
+  }
+}

@@ -1,0 +1,189 @@
+.cr-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+/* ─── Override global svg { display: block } — icons must stay inline with text ─── */
+.cr-btn svg {
+  display: inline;
+  vertical-align: middle;
+  width: 1em;
+  height: 1em;
+}
+
+.cr-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,255,255,0.15) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+  pointer-events: none;
+}
+
+.cr-btn:hover::after {
+  opacity: 1;
+}
+
+.cr-btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.cr-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.cr-btn:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+/* ─── Sizes ───────────────────────────────────────────────────────── */
+.cr-btn--sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-body-sm);
+}
+
+.cr-btn--md {
+  height: 40px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-body-md);
+}
+
+.cr-btn--lg {
+  height: 48px;
+  padding: 0 var(--space-5);
+  font-size: var(--text-body-lg);
+}
+
+.cr-btn--full {
+  width: 100%;
+}
+
+.cr-btn--icon-only.cr-btn--sm { width: 32px; padding: 0; }
+.cr-btn--icon-only.cr-btn--md { width: 40px; padding: 0; }
+.cr-btn--icon-only.cr-btn--lg { width: 48px; padding: 0; }
+
+/* ─── Variants ────────────────────────────────────────────────────── */
+.cr-btn--primary {
+  background: var(--color-primary);
+  color: var(--color-text-on-brand);
+  box-shadow: var(--elev-1);
+}
+.cr-btn--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+  box-shadow: var(--elev-2);
+}
+.cr-btn--primary:active:not(:disabled) {
+  background: var(--color-primary-active);
+  box-shadow: none;
+}
+
+.cr-btn--secondary {
+  background: var(--color-surface-raised);
+  color: var(--color-text);
+  border-color: var(--color-border);
+  box-shadow: var(--elev-1);
+}
+.cr-btn--secondary:hover:not(:disabled) {
+  background: var(--color-surface);
+  border-color: var(--color-border-strong);
+  box-shadow: var(--elev-2);
+}
+
+.cr-btn--ghost {
+  background: transparent;
+  color: var(--color-text);
+}
+.cr-btn--ghost:hover:not(:disabled) {
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+}
+
+.cr-btn--outline {
+  background: transparent;
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+.cr-btn--outline:hover:not(:disabled) {
+  background: var(--color-primary-tint);
+  border-color: var(--color-primary-hover);
+  color: var(--color-primary-hover);
+}
+
+.cr-btn--accent {
+  background: var(--color-accent);
+  color: white;
+  box-shadow: var(--elev-1);
+}
+.cr-btn--accent:hover:not(:disabled) {
+  background: var(--color-accent-hover);
+  box-shadow: var(--elev-2);
+}
+
+.cr-btn--danger {
+  background: var(--color-danger);
+  color: white;
+  box-shadow: var(--elev-1);
+}
+.cr-btn--danger:hover:not(:disabled) {
+  background: var(--color-danger-text);
+  box-shadow: var(--elev-2);
+}
+
+/* ─── Icon containers ─────────────────────────────────────────────── */
+.cr-btn__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cr-btn__icon svg {
+  width: 1em;
+  height: 1em;
+}
+
+.cr-btn--sm .cr-btn__icon { font-size: 14px; }
+.cr-btn--md .cr-btn__icon { font-size: 16px; }
+.cr-btn--lg .cr-btn__icon { font-size: 18px; }
+
+.cr-btn__spinner {
+  display: inline-flex;
+  align-items: center;
+  animation: cr-btn-spin 0.7s linear infinite;
+}
+
+.cr-btn__spinner svg {
+  width: 1em;
+  height: 1em;
+}
+
+@keyframes cr-btn-spin {
+  to { transform: rotate(360deg); }
+}
+
+.cr-btn--loading .cr-btn__label {
+  opacity: 0.7;
+}

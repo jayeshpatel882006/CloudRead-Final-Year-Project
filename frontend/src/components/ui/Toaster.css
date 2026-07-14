@@ -1,0 +1,44 @@
+/* Toastify restyling to match the design system */
+.Toastify__toast-container {
+  font-family: var(--font-sans);
+  z-index: var(--z-toast);
+}
+
+.cr-toast,
+.Toastify__toast {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--elev-3) !important;
+  font-size: var(--text-body-md) !important;
+  padding: var(--space-3) var(--space-4) !important;
+  letter-spacing: -0.005em !important;
+  min-height: 48px !important;
+}
+
+.Toastify__progress-bar {
+  background: var(--color-primary) !important;
+}
+
+.Toastify__toast--success {
+  border-color: var(--color-success) !important;
+}
+.Toastify__toast--success .Toastify__progress-bar {
+  background: var(--color-success) !important;
+}
+
+.Toastify__toast--error {
+  border-color: var(--color-danger) !important;
+}
+.Toastify__toast--error .Toastify__progress-bar {
+  background: var(--color-danger) !important;
+}
+
+.Toastify__toast--warning .Toastify__progress-bar {
+  background: var(--color-warning) !important;
+}
+
+.Toastify__toast--info .Toastify__progress-bar {
+  background: var(--color-info) !important;
+}

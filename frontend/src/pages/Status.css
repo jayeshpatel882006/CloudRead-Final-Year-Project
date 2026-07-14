@@ -1,0 +1,92 @@
+.cr-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--space-12) var(--space-6);
+  font-family: var(--font-sans);
+  text-align: center;
+  background: var(--color-bg);
+  color: var(--color-text);
+  gap: var(--space-5);
+  max-width: 560px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* ─── Animated background ──────────────────────────────── */
+.cr-status::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 20% 30%, var(--brand-200) 0%, transparent 40%),
+    radial-gradient(circle at 80% 70%, var(--ember-400) 0%, transparent 40%);
+  opacity: 0.3;
+  animation: cr-status-breathe 8s ease-in-out infinite alternate;
+}
+
+:root[data-theme="dark"] .cr-status::before {
+  opacity: 0.15;
+}
+
+@keyframes cr-status-breathe {
+  from { transform: scale(1) rotate(0deg); }
+  to { transform: scale(1.08) rotate(3deg); }
+}
+
+.cr-status__art {
+  color: var(--color-primary);
+  margin-bottom: var(--space-2);
+  animation: cr-fade-in-up 0.6s var(--ease-standard) both;
+}
+
+.cr-status__eyebrow {
+  font-size: var(--text-overline);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-track);
+  color: var(--color-primary);
+  animation: cr-fade-in-up 0.6s var(--ease-standard) 0.1s both;
+}
+
+.cr-status__title {
+  font-family: var(--font-display);
+  font-size: var(--text-display-md);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+  margin: 0;
+  color: var(--color-text);
+  animation: cr-fade-in-up 0.6s var(--ease-standard) 0.2s both;
+}
+
+.cr-status__description {
+  font-size: var(--text-body-lg);
+  color: var(--color-text-muted);
+  letter-spacing: -0.005em;
+  line-height: 1.55;
+  margin: 0;
+  max-width: 460px;
+  animation: cr-fade-in-up 0.6s var(--ease-standard) 0.3s both;
+}
+
+.cr-status__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-2);
+  animation: cr-fade-in-up 0.6s var(--ease-standard) 0.4s both;
+}
+
+@keyframes cr-fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}

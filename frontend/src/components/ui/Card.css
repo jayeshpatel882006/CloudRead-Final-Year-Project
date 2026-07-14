@@ -1,0 +1,103 @@
+.cr-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-1);
+  transition:
+    transform var(--duration-base) var(--ease-standard),
+    box-shadow var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ─── Top accent bar (subtle gradient) ───────────────── */
+.cr-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-primary), transparent);
+  opacity: 0;
+  transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+.cr-card--interactive::before {
+  opacity: 0;
+}
+
+.cr-card--interactive:hover::before {
+  opacity: 1;
+}
+
+.cr-card.cr-card--interactive::before {
+  background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+}
+
+.cr-card--p-none { padding: 0; }
+.cr-card--p-sm   { padding: var(--space-3); }
+.cr-card--p-md   { padding: var(--space-5); }
+.cr-card--p-lg   { padding: var(--space-6); }
+.cr-card--p-xl   { padding: var(--space-8); }
+
+.cr-card--raised {
+  box-shadow: var(--elev-3);
+}
+
+.cr-card--flat {
+  box-shadow: none;
+  background: var(--color-surface-raised);
+}
+
+.cr-card--sunken {
+  background: var(--color-surface-sunken);
+  box-shadow: none;
+}
+
+.cr-card--interactive {
+  cursor: pointer;
+}
+
+.cr-card--interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--elev-3);
+  border-color: var(--color-primary);
+}
+
+.cr-card--interactive:active {
+  transform: translateY(-1px);
+  box-shadow: var(--elev-2);
+}
+
+.cr-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.cr-card__title {
+  font-size: var(--text-heading-md);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+.cr-card__subtitle {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.cr-card__footer {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

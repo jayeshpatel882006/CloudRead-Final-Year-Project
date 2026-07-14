@@ -1,184 +1,338 @@
-import { useEffect, useState } from "react";
-import API from "../services/api";
-import Layout from "../components/Layout";
-import Loader from "../components/Loader";
-import { toast } from "react-toastify";
-import AccessCountdown from "../components/AccessCountdown";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../css/student.css";
+import {
+  BookOpen,
+  Hourglass,
+  CheckCircle2,
+  XCircle,
+  Library,
+  ShieldCheck,
+} from "lucide-react";
+import API from "../services/api";
+import { toast } from "react-toastify";
+import { AuthContext } from "../context/AuthContext";
+import PageWrapper from "../components/PageWrapper";
+import Topbar from "../components/layout/Topbar";
+import AppShell from "../components/layout/AppShell";
 
-const StudentDashboard = () => {
+import {
+  Badge,
+  BookCard,
+  EmptyState,
+  PageHeader,
+  Pagination,
+  Spinner,
+  Stat,
+  Tabs,
+} from "../components/ui";
+import ActiveReadingCard from "../components/ActiveReadingCard";
+import "./StudentDashboard.css";
+
+const STATUS_META = {
+  pending: { label: "Pending", variant: "warning", icon: Hourglass },
+  approved: { label: "Reading", variant: "success", icon: CheckCircle2 },
+  expired: { label: "Expired", variant: "neutral", icon: Hourglass },
+  rejected: { label: "Rejected", variant: "danger", icon: XCircle },
+};
+
+export default function StudentDashboard() {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [books, setBooks] = useState([]);
-  const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [actionLoading, setActionLoading] = useState(null);
 
   useEffect(() => {
+    fetchBooks(1);
+    fetchRequests();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
+  const fetchBooks = async (page = 1) => {
+    try {
+      setLoading(true);
+      const res = await API.get(`/books?page=${page}&limit=12`);
+      setBooks(res.data.books);
+      setCurrentPage(res.data.currentPage);
+      setTotalPages(res.data.totalPages);
+    } catch (error) {
+      toast.error("Couldn't load the library.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  fetchBooks(1);
-}, []);
- const fetchBooks = async (page =1) => {
-  try {
-    setLoading(true);
-    const tost = toast.loading("Please wait...");
-    // toast.info("Loading dashboard data... ⏳",{autoClose:500});
-    // const booksRes = await API.get("/books");
-    const requestsRes = await API.get("/access/my");
-    
-    const res = await API.get(`/books?page=${page}&limit=3`);
-    console.log(res.data);
-    
-    setBooks(res.data.books);
-    setCurrentPage(res.data.currentPage);
-    setTotalPages(res.data.totalPages);
-    setRequests(requestsRes.data);
-    toast.update(tost,{render:"Dashboard loaded! 🎉",  type: "success",isLoading: false, autoClose: 2000 });
-  } catch (error) {
-    console.log(error.response?.data || error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchRequests = async () => {
+    try {
+      const res = await API.get("/access/my");
+      setRequests(res.data);
+    } catch {
+      // silent — main cards still render
+    }
+  };
+
+  const statusOf = (bookId) => {
+    const mine = requests
+      .filter(
+        (req) =>
+          (typeof req.book === "object" ? req.book._id : req.book) === bookId,
+      )
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return mine[0]?.status || null;
+  };
+
   const requestAccess = async (bookId) => {
     try {
+      setActionLoading(bookId);
       await API.post("/access", { bookId });
-      // 🔥 Refetch updated requests
-    const requestsRes = await API.get("/access/my");
-    setRequests(requestsRes.data);
-        // console.log("Updated Requests:",requestsRes.data);
-        
-      toast.success("Access request sent!");
+      await fetchRequests();
+      toast.success("Access request sent.");
     } catch (error) {
-      toast.error(error.response?.data?.message || "Request failed");
+      toast.error(error.response?.data?.message || "Request failed.");
+    } finally {
+      setActionLoading(null);
     }
   };
 
-  const openBook = async (bookId) => {
-    // In the new secure flow we navigate to the BookViewer route which
-    // fetches pages one at a time as watermarked PNG images. The raw PDF
-    // never reaches the browser.
-    try {
-      toast.info("Opening book... 📖");
-      navigate(`/student/book/${bookId}`);
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Access denied");
-    }
+  const openBook = (bookId) => {
+    toast.info("Opening your book…");
+    navigate(`/student/book/${bookId}`);
   };
 
-  
-  const getBookStatus = (bookId) => {
-  const bookRequests = requests.filter((req) => {
-    const requestBookId =
-      typeof req.book === "object" ? req.book._id : req.book;
+  const filteredBooks = useMemo(() => {
+    if (!search) return books;
+    const q = search.toLowerCase();
+    return books.filter(
+      (b) =>
+        b.title?.toLowerCase().includes(q) ||
+        b.author?.toLowerCase().includes(q) ||
+        b.category?.toLowerCase().includes(q),
+    );
+  }, [books, search]);
 
-    return requestBookId === bookId;
-  });
+  const tabCounts = useMemo(() => {
+    const counts = { all: books.length, reading: 0, pending: 0, finished: 0 };
+    for (const book of books) {
+      const s = statusOf(book._id);
+      if (s === "approved") counts.reading += 1;
+      if (s === "pending") counts.pending += 1;
+      if (s === "expired" || s === "rejected") counts.finished += 1;
+    }
+    return counts;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [books, requests]);
 
-  if (bookRequests.length === 0) return null;
+  // Approved requests with populated book data, sorted by least remaining time first
+  const activeReadings = useMemo(() => {
+    const approved = requests.filter(
+      (req) =>
+        req.status === "approved" &&
+        req.accessEndDate &&
+        req.accessStartDate &&
+        req.book,
+    );
+    return approved.sort((a, b) => {
+      const endA = new Date(a.accessEndDate).getTime();
+      const endB = new Date(b.accessEndDate).getTime();
+      return endA - endB; // expiring soonest first
+    });
+  }, [requests]);
 
-  // Sort by createdAt descending
-  bookRequests.sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+  const filteredByTab = useMemo(() => {
+    if (activeTab === "all") return filteredBooks;
+    if (activeTab === "reading")
+      return filteredBooks.filter((b) => statusOf(b._id) === "approved");
+    if (activeTab === "pending")
+      return filteredBooks.filter((b) => statusOf(b._id) === "pending");
+    if (activeTab === "finished")
+      return filteredBooks.filter((b) =>
+        ["expired", "rejected"].includes(statusOf(b._id)),
+      );
+    return filteredBooks;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filteredBooks, activeTab, requests]);
+
+  const topbar = () => (
+    <Topbar
+      title="Your library"
+      search={search}
+      onSearchChange={setSearch}
+      user={user}
+    />
   );
 
-  return bookRequests[0].status;
-};
-
-if (loading) {
   return (
-    <Layout>
-      <Loader />
-    </Layout>
+    <PageWrapper>
+      <AppShell role="student" user={user} onLogout={logout} topbar={topbar}>
+        <div className="cr-student">
+          <PageHeader
+            eyebrow={
+              user?.name
+                ? `Welcome, ${user.name.split(" ")[0]}`
+                : "Reading room"
+            }
+            title="Your library"
+            description="Browse the shelf, request access, and keep reading right where you left off."
+          />
+
+          <div className="cr-student__stats">
+            <Stat label="Books available" value={books.length} icon={Library} />
+            <Stat
+              label="Active loans"
+              value={tabCounts.reading}
+              icon={BookOpen}
+            />
+            <Stat
+              label="Pending requests"
+              value={tabCounts.pending}
+              icon={Hourglass}
+            />
+            <Stat
+              label="Past reads"
+              value={tabCounts.finished}
+              icon={ShieldCheck}
+            />
+          </div>
+
+          {/* ── Active Reading Section ───────────────────────── */}
+          {activeReadings.length > 0 ? (
+            <section className="cr-student__active">
+              <header className="cr-student__active-header">
+                <div>
+                  <h2 className="cr-student__active-title">Active Reading</h2>
+                  <p className="cr-student__active-desc">
+                    {activeReadings.length}{" "}
+                    {activeReadings.length === 1 ? "book" : "books"}{" "}
+                    currently on loan
+                  </p>
+                </div>
+              </header>
+              <div className="cr-student__active-grid">
+                {activeReadings.map((req) => (
+                  <ActiveReadingCard key={req._id} request={req} />
+                ))}
+              </div>
+            </section>
+          ) : null}
+
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            items={[
+              { value: "all", label: "All books", count: tabCounts.all },
+              { value: "reading", label: "Reading", count: tabCounts.reading },
+              { value: "pending", label: "Pending", count: tabCounts.pending },
+              { value: "finished", label: "Past", count: tabCounts.finished },
+            ]}
+          />
+
+          {loading ? (
+            <div className="cr-student__loading">
+              <Spinner size={28} />
+              <span>Loading your library…</span>
+            </div>
+          ) : filteredByTab.length === 0 ? (
+            <EmptyState
+              title={search ? "No matches" : "Your shelf is quiet"}
+              description={
+                search
+                  ? "Try a different title, author, or category."
+                  : "New books will appear here as your library adds them."
+              }
+              actionLabel={search ? undefined : "Browse the catalog"}
+              onAction={search ? undefined : () => setActiveTab("all")}
+            />
+          ) : (
+            <div className="cr-student__grid">
+              {filteredByTab.map((book) => {
+                const status = statusOf(book._id);
+                const meta = status ? STATUS_META[status] : null;
+                return (
+                  <BookCard
+                    key={book._id}
+                    book={book}
+                    onClick={() =>
+                      status === "approved" ? openBook(book._id) : null
+                    }
+                    badge={
+                      meta ? (
+                        <Badge variant={meta.variant} dot size="sm">
+                          {meta.label}
+                        </Badge>
+                      ) : null
+                    }
+                  >
+                    <div className="cr-student__card-actions">
+                      {status === "approved" ? (
+                        <button
+                          type="button"
+                          className="cr-btn cr-btn--primary cr-btn--md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openBook(book._id);
+                          }}
+                        >
+                          Open book
+                        </button>
+                      ) : null}
+                      {status === "pending" ? (
+                        <button
+                          className="cr-btn cr-btn--secondary cr-btn--md"
+                          disabled
+                        >
+                          <Hourglass size={14} /> Pending
+                        </button>
+                      ) : null}
+                      {status === "expired" || status === "rejected" ? (
+                        <button
+                          type="button"
+                          className="cr-btn cr-btn--outline cr-btn--md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            requestAccess(book._id);
+                          }}
+                          disabled={actionLoading === book._id}
+                        >
+                          Request again
+                        </button>
+                      ) : null}
+                      {!status ? (
+                        <button
+                          type="button"
+                          className="cr-btn cr-btn--primary cr-btn--md"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            requestAccess(book._id);
+                          }}
+                          disabled={actionLoading === book._id}
+                          loading={actionLoading === book._id}
+                        >
+                          Request access
+                        </button>
+                      ) : null}
+                    </div>
+                  </BookCard>
+                );
+              })}
+            </div>
+          )}
+
+          {!loading && totalPages > 1 ? (
+            <div className="cr-student__pagination">
+              <Pagination
+                page={currentPage}
+                totalPages={totalPages}
+                onPageChange={fetchBooks}
+              />
+            </div>
+          ) : null}
+        </div>
+      </AppShell>
+    </PageWrapper>
   );
 }
-
-return (
-  <Layout>
-    <div className="dashboard-container">
-      <h2 className="dashboard-title">📚 Student Dashboard</h2>
-
-      <div className="book-grid">
-        {books.map((book) => {
-          const status = getBookStatus(book._id);
-
-          return (
-            <div key={book._id} className="book-card">
-              <div className="card-header">
-                <h3>{book.title}</h3>
-                {status && (
-                  <span className={`status-badge ${status}`}>
-                    {status.toUpperCase()}
-                  </span>
-                )}
-              </div>
-
-              <p className="book-meta">👤 {book.author}</p>
-              <p className="book-meta">📂 {book.category}</p>
-
-              <div className="card-actions">
-                {status === "pending" && (
-                  <button className="btn-pending" disabled>
-                    ⏳ Pending Approval
-                  </button>
-                )}
-
-                {status === "approved" && (
-  <>
-    <AccessCountdown bookId={book._id} />
-    <button className="btn-open" onClick={() => openBook(book._id)}>
-      📖 Open Book
-    </button>
-  </>
-)}
-
-                {(status === "expired" || status === "rejected") && (
-                  <button
-                    className="btn-retry"
-                    onClick={() => requestAccess(book._id)}
-                  >
-                    🔄 Request Again
-                  </button>
-                )}
-
-                {!status && (
-                  <button
-                    className="btn-request"
-                    onClick={() => requestAccess(book._id)}
-                  >
-                    📩 Request Access
-                  </button>
-                )}
-              </div>
-            </div>
-          );
-        })}
-        
-      </div>
-      <div className="pagination">
-  <button
-    disabled={currentPage === 1}
-    onClick={() => fetchBooks(currentPage - 1)}
-  >
-    ← Prev
-  </button>
-
-  <span>
-    Page {currentPage} of {totalPages}
-  </span>
-
-  <button
-    disabled={currentPage === totalPages}
-    onClick={() => fetchBooks(currentPage + 1)}
-  >
-    Next →
-  </button>
-</div>
-    </div>
-  </Layout>
-);
-}
-
-export default StudentDashboard;

@@ -1,13 +1,7 @@
 // components/reader/FloatingActions.jsx
 // -----------------------------------------------------------------------------
-// Floating vertical button group on the right side of the reader.
-//
-// Buttons:
-//   - Bookmark (toggle)
-//   - Download Request (disabled — placeholder)
-//   - Report Issue
-//   - Copy Link
-//   - Go to Top
+// CloudRead-branded floating vertical button group on the right side.
+// Uses design tokens from tokens.css — no hardcoded colors.
 // -----------------------------------------------------------------------------
 
 import { useState } from "react";
@@ -26,21 +20,22 @@ export default function FloatingActions({ currentPage, onGoToTop }) {
   const handleBookmark = () => {
     setBookmarked(!bookmarked);
     toast.success(
-      bookmarked ? "Bookmark removed" : `Page ${currentPage} bookmarked`
+      bookmarked ? "Bookmark removed" : `Page ${currentPage} bookmarked`,
     );
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      toast.success("Link copied to clipboard");
-    }).catch(() => {
-      toast.error("Failed to copy link");
-    });
+    navigator.clipboard
+      .writeText(window.location.href)
+      .then(() => toast.success("Link copied to clipboard"))
+      .catch(() => toast.error("Failed to copy link"));
   };
 
   const handleReport = () => {
     toast.info("Report feature coming soon");
   };
+
+  const activeStyle = bookmarked ? { color: "var(--color-primary)" } : {};
 
   return (
     <div className="reader-floating-actions">
@@ -48,7 +43,7 @@ export default function FloatingActions({ currentPage, onGoToTop }) {
         className="reader-fab"
         onClick={handleBookmark}
         title={bookmarked ? "Remove bookmark" : "Bookmark this page"}
-        style={bookmarked ? { color: "var(--reader-accent)" } : {}}
+        style={activeStyle}
       >
         <FiBookmark size={16} />
       </button>

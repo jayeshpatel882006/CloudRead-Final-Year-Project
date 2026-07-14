@@ -1,0 +1,82 @@
+.cr-book-cover {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--cover-from, var(--brand-700)), var(--cover-to, var(--ink-700)));
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 8px 20px rgba(31, 26, 46, 0.18),
+    0 0 0 1px rgba(31, 26, 46, 0.06);
+  color: white;
+  font-family: var(--font-sans);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8% 10%;
+  text-align: center;
+  isolation: isolate;
+}
+
+.cr-book-cover--xs { font-size: 9px; }
+.cr-book-cover--sm { font-size: 11px; }
+.cr-book-cover--md { font-size: 13px; }
+.cr-book-cover--lg { font-size: 16px; }
+.cr-book-cover--xl { font-size: 20px; }
+
+.cr-book-cover__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cr-book-cover__art {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+}
+
+.cr-book-cover__initial {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 3.2em;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.cr-book-cover__divider {
+  width: 30%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.cr-book-cover__title {
+  font-size: 0.8em;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  opacity: 0.9;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.cr-book-cover__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.25), rgba(0,0,0,0.15));
+  pointer-events: none;
+}

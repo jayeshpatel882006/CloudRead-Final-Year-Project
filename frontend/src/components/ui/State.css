@@ -1,0 +1,93 @@
+.cr-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  gap: var(--space-4);
+  font-family: var(--font-sans);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.cr-state--error .cr-state__title {
+  color: var(--color-danger-text);
+}
+
+.cr-state__art {
+  color: var(--color-text-muted);
+  opacity: 0.9;
+}
+
+.cr-state__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cr-state__title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  line-height: 1.2;
+  margin: 0;
+}
+
+.cr-state__description {
+  font-size: var(--text-body-md);
+  color: var(--color-text-muted);
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+.cr-state__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* ─── Skeleton ─────────────────────────────────────────────────────── */
+.cr-skeleton {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--linen-200) 0%,
+    var(--linen-300) 50%,
+    var(--linen-200) 100%
+  );
+  background-size: 200% 100%;
+  animation: cr-skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+  min-height: 12px;
+}
+:root[data-theme="dark"] .cr-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--ink-800) 0%,
+    var(--ink-700) 50%,
+    var(--ink-800) 100%
+  );
+  background-size: 200% 100%;
+}
+@keyframes cr-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Spinner ──────────────────────────────────────────────────────── */
+.cr-spinner {
+  display: inline-block;
+  border-radius: 50%;
+  border: 2px solid var(--color-primary-tint);
+  border-top-color: var(--color-primary);
+  animation: cr-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes cr-spin {
+  to { transform: rotate(360deg); }
+}

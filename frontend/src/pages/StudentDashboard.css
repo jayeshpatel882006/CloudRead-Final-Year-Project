@@ -1,0 +1,99 @@
+.cr-student {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  font-family: var(--font-sans);
+  max-width: var(--layout-content-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+.cr-student__stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+@media (max-width: 880px) {
+  .cr-student__stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.cr-student__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-5);
+  margin-top: var(--space-2);
+}
+
+.cr-student__card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
+/* ── Active Reading Section ──────────────────────────────────────────── */
+
+.cr-student__active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.cr-student__active-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cr-student__active-title {
+  font-family: var(--font-display, var(--font-sans));
+  font-size: var(--text-title-sm, 1.125rem);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.cr-student__active-desc {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  margin: var(--space-1) 0 0 0;
+}
+
+.cr-student__active-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .cr-student__active-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 1200px) {
+  .cr-student__active-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.cr-student__pagination {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-6);
+}
+
+.cr-student__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+  letter-spacing: -0.005em;
+}

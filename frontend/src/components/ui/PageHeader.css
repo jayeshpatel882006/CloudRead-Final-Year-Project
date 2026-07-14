@@ -1,0 +1,112 @@
+.cr-page-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--layout-page-header-mb);
+  font-family: var(--font-sans);
+}
+
+.cr-page-header__row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.cr-page-header__text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-width: 720px;
+}
+
+.cr-page-header__eyebrow {
+  font-size: var(--text-overline);
+  font-weight: 600;
+  letter-spacing: var(--text-overline-track);
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.cr-page-header__title {
+  font-family: var(--font-display);
+  font-size: var(--text-display-lg);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: var(--text-display-lg-track);
+  line-height: var(--text-display-lg-lh);
+  margin: 0;
+}
+
+.cr-page-header--sm .cr-page-header__title {
+  font-size: var(--text-heading-xl);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.cr-page-header--lg .cr-page-header__title {
+  font-size: var(--text-display-xl);
+}
+
+.cr-page-header--center {
+  text-align: center;
+  align-items: center;
+}
+.cr-page-header--center .cr-page-header__text { align-items: center; }
+.cr-page-header--center .cr-page-header__row { justify-content: center; }
+
+.cr-page-header__description {
+  font-size: var(--text-body-lg);
+  color: var(--color-text-secondary);
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+.cr-page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* ─── Section ──────────────────────────────────────────────────────── */
+.cr-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+  font-family: var(--font-sans);
+}
+
+.cr-section__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.cr-section__title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-xl);
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.cr-section__description {
+  font-size: var(--text-body-md);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+  letter-spacing: -0.005em;
+}
+
+.cr-section__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}

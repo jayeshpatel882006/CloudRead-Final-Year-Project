@@ -1,0 +1,274 @@
+/* ============================================================================
+   CloudRead Design Tokens
+   ----------------------------------------------------------------------------
+   Single source of truth. Every component reads from these CSS custom
+   properties. Never hardcode a color, radius, or motion value in component
+   styles — extend the token set here.
+
+   Light theme is the default on :root.
+   Dark theme overrides on :root[data-theme="dark"].
+   System preference fallback is on :root[data-theme="system"] via media query
+   in globals.css.
+   ========================================================================== */
+
+:root {
+  /* ─── Brand ────────────────────────────────────────────────────────── */
+  --brand-50: #eeeeFb;
+  --brand-100: #dcddf7;
+  --brand-200: #b9bbef;
+  --brand-300: #9698e7;
+  --brand-400: #7376de;
+  --brand-500: #5b5bd6;
+  --brand-600: #4848b8;
+  --brand-700: #36369a;
+  --brand-800: #25257c;
+  --brand-900: #13135e;
+
+  /* ─── Linen (page surface) ────────────────────────────────────────── */
+  --linen-0: #ffffff;
+  --linen-50: #fbf9f2;
+  --linen-100: #f6f4ee;
+  --linen-200: #ece8da;
+  --linen-300: #d9d3be;
+  --linen-400: #b8af92;
+
+  /* ─── Ember (accent) ──────────────────────────────────────────────── */
+  --ember-50: #fbefe6;
+  --ember-100: #f5dbc4;
+  --ember-500: #e07a3c;
+  --ember-600: #c26129;
+
+  /* ─── Ink Brown (literary accent) ─────────────────────────────────── */
+  --ink-brown-500: #3b2a1f;
+  --ink-brown-700: #2a1d14;
+  --ink-brown-900: #1a110b;
+
+  /* ─── Ink (cool neutrals) ─────────────────────────────────────────── */
+  --ink-0: #ffffff;
+  --ink-50: #f7f7f8;
+  --ink-100: #ededf1;
+  --ink-200: #d5d6dd;
+  --ink-300: #b1b3bf;
+  --ink-400: #8588a0;
+  --ink-500: #5c5f7a;
+  --ink-600: #3f4263;
+  --ink-700: #272a48;
+  --ink-750: #1f1a2e;
+  --ink-800: #161830;
+  --ink-900: #0a0b1a;
+  --ink-950: #06070f;
+
+  /* ─── Semantic ────────────────────────────────────────────────────── */
+  --success-50: #e9f1ea;
+  --success-100: #cfe3d3;
+  --success-500: #3f8559;
+  --success-700: #28573b;
+  --warning-50: #f8eeda;
+  --warning-100: #eedcb1;
+  --warning-500: #a87b22;
+  --warning-700: #7e5c13;
+  --danger-50: #f5dfdf;
+  --danger-100: #ebbfbf;
+  --danger-500: #a53a3a;
+  --danger-700: #7a2222;
+  --info-50: #e6ecf5;
+  --info-100: #cdd9eb;
+  --info-500: #3d6ba0;
+  --info-700: #284b75;
+
+  /* ─── Semantic role mapping (single source of truth) ──────────────── */
+  --color-bg: var(--linen-100);
+  --color-surface: var(--linen-0);
+  --color-surface-raised: var(--linen-50);
+  --color-surface-sunken: var(--linen-200);
+  --color-border: var(--linen-200);
+  --color-border-strong: var(--linen-300);
+
+  --color-text: var(--ink-750);
+  --color-text-secondary: var(--ink-500);
+  --color-text-muted: var(--ink-400);
+  --color-text-inverse: var(--linen-0);
+  --color-text-on-brand: var(--ink-0);
+
+  --color-primary: var(--brand-500);
+  --color-primary-hover: var(--brand-600);
+  --color-primary-active: var(--brand-700);
+  --color-primary-tint: var(--brand-50);
+  --color-primary-tint-hover: var(--brand-100);
+
+  --color-accent: var(--ember-500);
+  --color-accent-hover: var(--ember-600);
+
+  --color-focus-ring: var(--brand-500);
+
+  --color-success: var(--success-500);
+  --color-success-bg: var(--success-50);
+  --color-success-text: var(--success-700);
+  --color-warning: var(--warning-500);
+  --color-warning-bg: var(--warning-50);
+  --color-warning-text: var(--warning-700);
+  --color-danger: var(--danger-500);
+  --color-danger-bg: var(--danger-50);
+  --color-danger-text: var(--danger-700);
+  --color-info: var(--info-500);
+  --color-info-bg: var(--info-50);
+  --color-info-text: var(--info-700);
+
+  /* ─── Spacing (8px base, with 4px half-steps) ─────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ─── Radius ──────────────────────────────────────────────────────── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
+
+  /* ─── Borders ─────────────────────────────────────────────────────── */
+  --border-thin: 1px;
+  --border-strong: 2px;
+
+  /* ─── Elevation (light) ───────────────────────────────────────────── */
+  --elev-1: 0 1px 0 rgba(255, 255, 255, 0.6) inset,
+            0 1px 2px rgba(31, 26, 46, 0.04),
+            0 0 0 1px rgba(31, 26, 46, 0.02);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, 0.7) inset,
+            0 4px 12px rgba(31, 26, 46, 0.06),
+            0 0 0 1px rgba(31, 26, 46, 0.03);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, 0.8) inset,
+            0 10px 30px rgba(31, 26, 46, 0.08),
+            0 0 0 1px rgba(31, 26, 46, 0.04);
+  --elev-4: 0 20px 50px rgba(31, 26, 46, 0.10),
+            0 0 0 1px rgba(31, 26, 46, 0.04);
+  --elev-5: 0 30px 80px rgba(31, 26, 46, 0.14),
+            0 0 0 1px rgba(31, 26, 46, 0.05);
+
+  /* ─── Motion ──────────────────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-page: 480ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.2, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ─── Z-index ─────────────────────────────────────────────────────── */
+  --z-base: 0;
+  --z-elevated: 10;
+  --z-sticky: 100;
+  --z-dropdown: 1000;
+  --z-modal-backdrop: 1100;
+  --z-modal: 1200;
+  --z-toast: 1300;
+  --z-tooltip: 1400;
+
+  /* ─── Type ────────────────────────────────────────────────────────── */
+  --font-sans: "Inter Variable", "Inter", system-ui, -apple-system,
+    BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", "Fraunces", Georgia,
+    "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace,
+    SFMono-Regular, monospace;
+
+  --text-display-2xl: 4.5rem;        /* 72px */
+  --text-display-2xl-lh: 1.02;
+  --text-display-2xl-track: -0.04em;
+  --text-display-xl: 3.5rem;         /* 56px */
+  --text-display-xl-lh: 1.04;
+  --text-display-xl-track: -0.035em;
+  --text-display-lg: 2.5rem;         /* 40px */
+  --text-display-lg-lh: 1.10;
+  --text-display-lg-track: -0.025em;
+  --text-heading-xl: 1.75rem;        /* 28px */
+  --text-heading-xl-lh: 1.20;
+  --text-heading-xl-track: -0.02em;
+  --text-heading-lg: 1.375rem;       /* 22px */
+  --text-heading-lg-lh: 1.25;
+  --text-heading-lg-track: -0.015em;
+  --text-heading-md: 1.125rem;       /* 18px */
+  --text-heading-md-lh: 1.30;
+  --text-heading-md-track: -0.01em;
+  --text-heading-sm: 0.9375rem;      /* 15px */
+  --text-heading-sm-lh: 1.35;
+  --text-heading-sm-track: -0.005em;
+  --text-body-lg: 1rem;              /* 16px */
+  --text-body-lg-lh: 1.60;
+  --text-body-md: 0.875rem;          /* 14px */
+  --text-body-md-lh: 1.55;
+  --text-body-sm: 0.8125rem;         /* 13px */
+  --text-body-sm-lh: 1.50;
+  --text-caption: 0.75rem;           /* 12px */
+  --text-caption-lh: 1.45;
+  --text-caption-track: 0.01em;
+  --text-overline: 0.6875rem;        /* 11px */
+  --text-overline-lh: 1.30;
+  --text-overline-track: 0.10em;
+  --text-mono-sm: 0.75rem;           /* 12px */
+  --text-mono-sm-lh: 1.50;
+
+  /* ─── Layout ──────────────────────────────────────────────────────── */
+  --layout-page-px-mobile: var(--space-4);
+  --layout-page-px-tablet: var(--space-8);
+  --layout-page-px-desktop: var(--space-12);
+  --layout-page-py: var(--space-10);
+  --layout-sidebar-w: 248px;
+  --layout-sidebar-w-collapsed: 64px;
+  --layout-topbar-h: 60px;
+  --layout-content-max-w: 1280px;
+  --layout-page-header-mb: var(--space-10);
+
+  /* ─── Texture ─────────────────────────────────────────────────────── */
+  --texture-paper: url("../../public/textures/paper.svg");
+  --texture-opacity: 1;             /* pattern itself is 3% — no opacity on parent */
+}
+
+/* ─── Dark theme overrides ──────────────────────────────────────────── */
+:root[data-theme="dark"] {
+  --color-bg: var(--ink-950);
+  --color-surface: var(--ink-900);
+  --color-surface-raised: var(--ink-800);
+  --color-surface-sunken: var(--ink-900);
+  --color-border: var(--ink-700);
+  --color-border-strong: var(--ink-600);
+
+  --color-text: var(--ink-100);
+  --color-text-secondary: var(--ink-300);
+  --color-text-muted: var(--ink-400);
+  --color-text-inverse: var(--ink-800);
+
+  --color-primary-tint: rgba(91, 91, 214, 0.16);
+  --color-primary-tint-hover: rgba(91, 91, 214, 0.26);
+
+  --color-success-bg: rgba(63, 133, 89, 0.16);
+  --color-warning-bg: rgba(168, 123, 34, 0.16);
+  --color-danger-bg: rgba(165, 58, 58, 0.16);
+  --color-info-bg: rgba(61, 107, 160, 0.16);
+
+  --elev-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+            0 1px 2px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.04);
+  --elev-2: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
+            0 4px 12px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.05);
+  --elev-3: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
+            0 10px 30px rgba(0, 0, 0, 0.55),
+            0 0 0 1px rgba(255, 255, 255, 0.06);
+  --elev-4: 0 20px 50px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(255, 255, 255, 0.07);
+  --elev-5: 0 30px 80px rgba(0, 0, 0, 0.65),
+            0 0 0 1px rgba(255, 255, 255, 0.08);
+}

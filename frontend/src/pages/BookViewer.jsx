@@ -191,6 +191,69 @@ const BookViewer = () => {
     }
   }, []);
 
+  // ── Fullscreen change listener ───────────────────────────────
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler);
+    };
+  }, []);
+
+  // ── Navigate back ─────────────────────────────────────────────
+  const goBack = useCallback(() => navigate("/student"), [navigate]);
+
+  // ── Zoom handlers ─────────────────────────────────────────────
+  const handleZoomChange = useCallback((val) => {
+    setZoom(Math.max(50, Math.min(200, val)));
+  }, []);
+
+  const handleFitWidth = useCallback(() => setZoom(100), []);
+  const handleFitPage = useCallback(() => setZoom(80), []);
+
+  // ── Theme toggle ──────────────────────────────────────────────
+  const toggleTheme = useCallback(() => setIsDark((d) => !d), []);
+
+  // ── Go to top ────────────────────────────────────────────────
+  const goToTop = useCallback(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // ── Navigate pages ────────────────────────────────────────────
+  // Scrolls to the exact page element using its DOM position.
+  // Never approximate — uses getBoundingClientRect for precision.
+  const scrollToPage = useCallback((targetPage) => {
+    const scrollArea = scrollRef.current;
+    if (!scrollArea) return;
+
+    const targetEl = pageRefs.current.get(targetPage);
+    if (!targetEl) return;
+
+    const targetRect = targetEl.getBoundingClientRect();
+    const containerRect = scrollArea.getBoundingClientRect();
+
+    // Calculate exact scroll position: current scroll pos + element offset within viewport.
+    // Subtract 24px (--space-6) so the page has breathing room from the top.
+    const targetScrollTop = scrollArea.scrollTop + targetRect.top - containerRect.top - 24;
+
+    scrollArea.scrollTo({ top: targetScrollTop, behavior: "smooth" });
+    setCurrentPage(targetPage);
+  }, []);
+
+  const goToPrevPage = useCallback(() => {
+    const prev = currentPage - 1;
+    if (prev < 1) return;
+    scrollToPage(prev);
+  }, [currentPage, scrollToPage]);
+
+  const goToNextPage = useCallback(() => {
+    const next = currentPage + 1;
+    if (next > (meta?.totalPages || 0)) return;
+    scrollToPage(next);
+  }, [currentPage, meta?.totalPages, scrollToPage]);
+
   // ── Keyboard shortcuts ────────────────────────────────────────
   useEffect(() => {
     const handler = (e) => {
@@ -200,11 +263,11 @@ const BookViewer = () => {
       switch (e.key) {
         case "ArrowDown":
           e.preventDefault();
-          scrollRef.current?.scrollBy({ top: 600, behavior: "smooth" });
+          goToNextPage();
           break;
         case "ArrowUp":
           e.preventDefault();
-          scrollRef.current?.scrollBy({ top: -600, behavior: "smooth" });
+          goToPrevPage();
           break;
         case "=":
           if (e.ctrlKey || e.metaKey) {
@@ -243,56 +306,13 @@ const BookViewer = () => {
 
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [toggleFullscreen]);
-
-  // ── Fullscreen change listener ───────────────────────────────
-  useEffect(() => {
-    const handler = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener("fullscreenchange", handler);
-    document.addEventListener("webkitfullscreenchange", handler);
-    return () => {
-      document.removeEventListener("fullscreenchange", handler);
-      document.removeEventListener("webkitfullscreenchange", handler);
-    };
-  }, []);
-
-  // ── Navigate back ─────────────────────────────────────────────
-  const goBack = useCallback(() => navigate("/student"), [navigate]);
-
-  // ── Zoom handlers ─────────────────────────────────────────────
-  const handleZoomChange = useCallback((val) => {
-    setZoom(Math.max(50, Math.min(200, val)));
-  }, []);
-
-  const handleFitWidth = useCallback(() => setZoom(100), []);
-  const handleFitPage = useCallback(() => setZoom(80), []);
-
-  // ── Theme toggle ──────────────────────────────────────────────
-  const toggleTheme = useCallback(() => setIsDark((d) => !d), []);
-
-  // ── Go to top ────────────────────────────────────────────────
-  const goToTop = useCallback(() => {
-    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-  }, []);
-
-  // ── Navigate pages ────────────────────────────────────────────
-  const goToPrevPage = useCallback(() => {
-    const scrollArea = scrollRef.current;
-    if (!scrollArea) return;
-    scrollArea.scrollBy({ top: -scrollArea.clientHeight * 0.8, behavior: "smooth" });
-  }, []);
-
-  const goToNextPage = useCallback(() => {
-    const scrollArea = scrollRef.current;
-    if (!scrollArea) return;
-    scrollArea.scrollBy({ top: scrollArea.clientHeight * 0.8, behavior: "smooth" });
-  }, []);
+  }, [toggleFullscreen, goToPrevPage, goToNextPage]);
 
   // ── Loading State ────────────────────────────────────────────
   if (metaLoading) {
     return (
       <div className="reader-container">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+        <div className="reader-loading-state">
           <Loader />
         </div>
       </div>
@@ -303,26 +323,15 @@ const BookViewer = () => {
   if (metaError || !meta) {
     return (
       <div className="reader-container">
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", gap: 16, padding: 24, textAlign: "center" }}>
-          <h2 style={{ color: "#b91c1c", margin: 0 }}>Could not open book</h2>
-          <p style={{ color: "var(--reader-text-secondary)", maxWidth: 400 }}>
+        <div className="reader-error-state">
+          <h2 className="reader-error-state__title">Could not open book</h2>
+          <p className="reader-error-state__desc">
             {metaError === 403 && "Access denied. Please request access from your dashboard."}
             {metaError === 410 && "Your access to this book has expired."}
             {metaError === 404 && "Book not found."}
             {metaError === "unknown" && "An error occurred while loading the book."}
           </p>
-          <button
-            onClick={goBack}
-            style={{
-              padding: "10px 24px",
-              borderRadius: 8,
-              border: "none",
-              background: "var(--reader-accent)",
-              color: "white",
-              fontWeight: 600,
-              cursor: "pointer",
-            }}
-          >
+          <button className="reader-retry-btn" onClick={goBack}>
             Back to Library
           </button>
         </div>
@@ -345,6 +354,7 @@ const BookViewer = () => {
       {/* ── Toolbar ──────────────────────────────── */}
       <ReaderToolbar
         title={meta.title}
+        author={meta.author}
         currentPage={currentPage}
         totalPages={total}
         zoom={zoom}
@@ -363,27 +373,9 @@ const BookViewer = () => {
 
       {/* ── Sidebar Toggle ─────────────────────────── */}
       <button
-        className="reader-toolbar-btn"
+        className="reader-sidebar-toggle"
         onClick={() => setSidebarOpen(true)}
         title="Book Info"
-        style={{
-          position: "fixed",
-          left: 12,
-          bottom: 80,
-          zIndex: 1020,
-          width: 36,
-          height: 36,
-          borderRadius: 8,
-          border: "none",
-          background: "var(--reader-toolbar-bg)",
-          backdropFilter: "blur(8px)",
-          cursor: "pointer",
-          color: "var(--reader-text-secondary)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-        }}
       >
         <FiSidebar size={16} />
       </button>
@@ -393,6 +385,7 @@ const BookViewer = () => {
         onClose={() => setSidebarOpen(false)}
         meta={meta}
         currentPage={currentPage}
+        bookId={bookId}
       />
 
       {/* ── Reading Area ─────────────────────────── */}
@@ -438,7 +431,7 @@ const BookViewer = () => {
       <FloatingActions currentPage={currentPage} onGoToTop={goToTop} />
 
       {/* ── Page Indicator ───────────────────────── */}
-      <PageIndicator currentPage={currentPage} totalPages={total} />
+      <PageIndicator currentPage={currentPage} totalPages={total} zoom={zoom} />
     </div>
   );
 };

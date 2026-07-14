@@ -1,18 +1,17 @@
 // components/reader/PageIndicator.jsx
 // -----------------------------------------------------------------------------
-// Floating bottom pill showing "Page 15 / 320".
-// Updates automatically based on the current visible page.
+// CloudRead-branded floating bottom pill showing page progress and zoom level.
+// Uses design tokens — no hardcoded colors.
 // Auto-hides after 2 seconds of inactivity, reappears on scroll.
 // -----------------------------------------------------------------------------
 
 import { useEffect, useRef, useState } from "react";
 
-export default function PageIndicator({ currentPage, totalPages }) {
+export default function PageIndicator({ currentPage, totalPages, zoom = 100 }) {
   const [visible, setVisible] = useState(true);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Show on scroll, hide after 2s
     setVisible(true);
     clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setVisible(false), 2000);
@@ -40,8 +39,10 @@ export default function PageIndicator({ currentPage, totalPages }) {
       }`}
     >
       <span>Page {currentPage}</span>
-      <span style={{ opacity: 0.5 }}>/</span>
-      <span style={{ opacity: 0.7 }}>{totalPages}</span>
+      <span className="reader-page-indicator__sep">/</span>
+      <span>{totalPages}</span>
+      <span className="reader-page-indicator__divider" />
+      <span>{Math.round(zoom)}%</span>
     </div>
   );
 }

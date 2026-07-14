@@ -1,40 +1,55 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, User, GraduationCap, BookOpenCheck, Shield } from "lucide-react";
 import API from "../services/api";
-import "../css/authentication.css"
 import PageWrapper from "../components/PageWrapper";
 import { toast } from "react-toastify";
+import { Button, Input, PasswordInput } from "../components/ui";
+import { AuthShell } from "./Auth";
+
+const ROLE_DESCRIPTIONS = {
+  student: "Borrow books, request access, and track your reading history.",
+  librarian: "Manage the catalog, approve access requests, and audit reading sessions.",
+};
+
+const ROLE_META = [
+  {
+    value: "student",
+    label: "Student",
+    icon: GraduationCap,
+    description: ROLE_DESCRIPTIONS.student,
+  },
+  {
+    value: "librarian",
+    label: "Librarian",
+    icon: BookOpenCheck,
+    description: ROLE_DESCRIPTIONS.librarian,
+  },
+];
 
 const Register = () => {
   const navigate = useNavigate();
-
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     role: "student",
   });
-
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    setFormData((s) => ({ ...s, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     try {
       setLoading(true);
       await API.post("/auth/register", formData);
-      toast.success("Account created successfully 🎉 Login Again");
+      toast.success("Account created. Welcome to CloudRead!");
       navigate("/login", { replace: true });
     } catch (err) {
-      toast.error(err.response?.data?.message || "Registration failed");
+      toast.error(err.response?.data?.message || "Registration failed.");
     } finally {
       setLoading(false);
     }
@@ -42,75 +57,113 @@ const Register = () => {
 
   return (
     <PageWrapper>
-    <div className="auth-container">
+      <AuthShell
+        eyebrow="Create your account"
+        title="Join a calmer library."
+        subtitle="One account for every shelf in your institution — secure by default, audit-ready by design."
+        altLink={<>Have an account? <Link to="/login">Sign in instead</Link></>}
+      >
+        <header className="cr-auth__form-head">
+          <h1 className="cr-auth__form-title">Create an account</h1>
+          <p className="cr-auth__form-subtitle">
+            Tell us a little about you, and pick the role that fits how you'll use CloudRead.
+          </p>
+        </header>
 
-      <div className="auth-card">
-        <h1 className="auth-title">Create Account</h1>
-        <p className="auth-subtitle">
-          Join CloudRead and access secure digital libraries.
-        </p>
-
-        {error && <div className="auth-error">{error}</div>}
-
-        <form onSubmit={handleSubmit} className="auth-form">
-
-          <input
+        <form onSubmit={handleSubmit} className="cr-auth__form">
+          <Input
             type="text"
             name="name"
-            placeholder="Full Name"
+            label="Full name"
+            placeholder="Jane Doe"
             value={formData.name}
             onChange={handleChange}
+            leftIcon={<User size={16} />}
+            autoComplete="name"
             required
           />
 
-          <input
+          <Input
             type="email"
             name="email"
-            placeholder="Email Address"
+            label="Email"
+            placeholder="you@example.com"
             value={formData.email}
             onChange={handleChange}
+            leftIcon={<Mail size={16} />}
+            autoComplete="email"
             required
           />
 
-          <input
-            type="password"
+          <PasswordInput
             name="password"
-            placeholder="Password"
+            label="Password"
+            placeholder="At least 8 characters"
             value={formData.password}
             onChange={handleChange}
+            helper="Mix letters, numbers, and a symbol for a stronger password."
+            autoComplete="new-password"
             required
           />
 
-          <select
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
+          <div>
+            <span
+              style={{
+                display: "block",
+                fontSize: "var(--text-body-sm)",
+                fontWeight: 500,
+                marginBottom: "var(--space-2)",
+                color: "var(--color-text)",
+              }}
+            >
+              I'm joining as a…
+            </span>
+            <div className="cr-auth__roles" role="radiogroup" aria-label="Role">
+              {ROLE_META.map((r) => {
+                const Icon = r.icon;
+                const selected = formData.role === r.value;
+                return (
+                  <button
+                    type="button"
+                    key={r.value}
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setFormData((s) => ({ ...s, role: r.value }))}
+                    className={`cr-auth__role ${selected ? "cr-auth__role--selected" : ""}`}
+                  >
+                    <span className="cr-auth__role-title">
+                      <Icon size={16} style={{ marginRight: 6, verticalAlign: "-2px" }} />
+                      {r.label}
+                    </span>
+                    <span className="cr-auth__role-desc">{r.description}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            size="lg"
+            loading={loading}
+            fullWidth
+            leftIcon={<Shield size={16} />}
+            className="cr-auth__submit"
           >
-            <option value="student">Student</option>
-            <option value="librarian">Librarian</option>
-          </select>
+            {loading ? "Creating account…" : "Create my account"}
+          </Button>
 
-          <button type="submit" className="auth-button">
-            {loading ? "Creating..." : "Create Account"}
-          </button>
-
+          <p style={{
+            fontSize: "var(--text-caption)",
+            color: "var(--color-text-muted)",
+            marginTop: "var(--space-2)",
+            lineHeight: 1.5,
+          }}>
+            By creating an account, you agree to CloudRead's terms of service
+            and privacy policy.
+          </p>
         </form>
-
-        <p className="auth-footer">
-          Already have an account?{" "}
-          <span onClick={() => navigate("/login")}>
-            Login
-          </span>
-        </p>
-       <p className="auth-explore">
-  Just exploring?{" "}
-  <span onClick={() => navigate("/")}>
-    Visit homepage
-  </span>
-</p>
-      </div>
-
-    </div>
+      </AuthShell>
     </PageWrapper>
   );
 };

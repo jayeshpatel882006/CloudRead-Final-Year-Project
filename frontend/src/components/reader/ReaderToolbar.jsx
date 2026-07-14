@@ -1,18 +1,10 @@
 // components/reader/ReaderToolbar.jsx
 // -----------------------------------------------------------------------------
-// Floating glassmorphism toolbar for the full-screen PDF reader.
-//
-// Features:
-//   - Auto-hides while scrolling, reappears when mouse moves to top 80px
-//   - Back to Library button with book title and page counter
-//   - Zoom controls (-, +, Fit Width, Fit Page)
-//   - Fullscreen toggle
-//   - Theme toggle (Light/Dark)
-//   - More menu (placeholder for future features)
-//   - Responsive: simplified on tablet, minimal on mobile
+// CloudRead-branded floating glass toolbar for the full-screen reader.
+// Uses design tokens from tokens.css — no hardcoded colors.
 // -----------------------------------------------------------------------------
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   FiArrowLeft,
   FiSearch,
@@ -25,13 +17,16 @@ import {
   FiMoreHorizontal,
   FiChevronLeft,
   FiChevronRight,
+  FiBook,
 } from "react-icons/fi";
+import BookCover from "../ui/BookCover";
 
-const TOOLBAR_HIDE_DELAY = 2000; // ms after scrolling stops
-const TOOLBAR_SHOW_ZONE = 80; // px from top to trigger toolbar show
+const TOOLBAR_HIDE_DELAY = 2000;
+const TOOLBAR_SHOW_ZONE = 80;
 
 export default function ReaderToolbar({
   title,
+  author,
   currentPage,
   totalPages,
   zoom,
@@ -50,7 +45,6 @@ export default function ReaderToolbar({
   const [visible, setVisible] = useState(true);
   const [showMenu, setShowMenu] = useState(false);
   const hideTimerRef = useRef(null);
-  const lastScrollY = useRef(0);
   const menuRef = useRef(null);
 
   // ── Auto-hide on scroll, show on mouse move to top ───────────
@@ -94,6 +88,9 @@ export default function ReaderToolbar({
     return () => document.removeEventListener("mousedown", handler);
   }, [showMenu]);
 
+  // ── Book thumbnail is shown only if title is available ────
+  const hasThumbnail = Boolean(title);
+
   return (
     <>
       {/* Invisible hover zone at the top of the screen */}
@@ -106,21 +103,32 @@ export default function ReaderToolbar({
       />
 
       <div className={`reader-toolbar ${visible ? "" : "reader-toolbar-hidden"}`}>
-        {/* ── Left Section ───────────────────────────────────── */}
+        {/* ── Left Section ─────────────────────────────────────── */}
         <div className="reader-toolbar-left">
-          <button
-            className="reader-toolbar-back"
-            onClick={onBack}
-            title="Back to Library"
-          >
+          <button className="reader-toolbar-back" onClick={onBack} title="Back to Library" aria-label="Back to library">
             <FiArrowLeft size={16} />
             <span>Back</span>
           </button>
 
           <div className="reader-toolbar-divider" />
 
-          <div className="reader-toolbar-title" title={title}>
-            {title}
+          {/* Book thumbnail */}
+          {hasThumbnail && (
+            <div className="reader-toolbar-thumb">
+              <BookCover title={title} author={author || ""} />
+            </div>
+          )}
+
+          {/* Title + Author */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 1, minWidth: 0 }}>
+            <div className="reader-toolbar-title" title={title}>
+              {title}
+            </div>
+            {author && (
+              <div className="reader-toolbar-author" title={author}>
+                {author}
+              </div>
+            )}
           </div>
 
           <div className="reader-toolbar-divider" />
@@ -130,33 +138,21 @@ export default function ReaderToolbar({
           </span>
         </div>
 
-        {/* ── Center Section ──────────────────────────────────── */}
+        {/* ── Center Section ────────────────────────────────────── */}
         <div className="reader-toolbar-center">
-          <button
-            className="reader-toolbar-btn"
-            onClick={onPrevPage}
-            title="Previous Page (↑)"
-          >
+          <button className="reader-toolbar-btn" onClick={onPrevPage} title="Previous Page (↑)">
             <FiChevronLeft size={16} />
           </button>
 
           <span className="reader-zoom-value">{currentPage}</span>
 
-          <button
-            className="reader-toolbar-btn"
-            onClick={onNextPage}
-            title="Next Page (↓)"
-          >
+          <button className="reader-toolbar-btn" onClick={onNextPage} title="Next Page (↓)">
             <FiChevronRight size={16} />
           </button>
 
           <div className="reader-toolbar-divider" />
 
-          <button
-            className="reader-toolbar-btn"
-            onClick={onSearch}
-            title="Search (future)"
-          >
+          <button className="reader-toolbar-btn" onClick={onSearch} title="Search (future)">
             <FiSearch size={16} />
           </button>
 
@@ -180,28 +176,20 @@ export default function ReaderToolbar({
             <FiPlus size={16} />
           </button>
 
-          <button
-            className="reader-toolbar-btn"
-            onClick={onFitWidth}
-            title="Fit Width"
-          >
+          <button className="reader-toolbar-btn" onClick={onFitWidth} title="Fit Width">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M3 7v10M21 7v10M7 12h10" />
             </svg>
           </button>
 
-          <button
-            className="reader-toolbar-btn"
-            onClick={onFitPage}
-            title="Fit Page"
-          >
+          <button className="reader-toolbar-btn" onClick={onFitPage} title="Fit Page">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="18" height="18" rx="2" />
             </svg>
           </button>
         </div>
 
-        {/* ── Right Section ──────────────────────────────────── */}
+        {/* ── Right Section ──────────────────────────────────────── */}
         <div className="reader-toolbar-right">
           <button
             className={`reader-toolbar-btn ${isFullscreen ? "active" : ""}`}
@@ -229,23 +217,9 @@ export default function ReaderToolbar({
             >
               <FiMoreHorizontal size={16} />
             </button>
+
             {showMenu && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "100%",
-                  right: 0,
-                  marginTop: 4,
-                  background: "var(--reader-toolbar-bg)",
-                  backdropFilter: "blur(16px)",
-                  border: "1px solid var(--reader-toolbar-border)",
-                  borderRadius: 10,
-                  boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                  padding: 6,
-                  minWidth: 160,
-                  zIndex: 1200,
-                }}
-              >
+              <div className="reader-toolbar-menu">
                 {[
                   { label: "Keyboard shortcuts", disabled: true },
                   { label: "Download PDF", disabled: true },
@@ -253,28 +227,9 @@ export default function ReaderToolbar({
                 ].map((item) => (
                   <button
                     key={item.label}
+                    className="reader-toolbar-menu-item"
                     disabled={item.disabled}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "8px 12px",
-                      border: "none",
-                      borderRadius: 6,
-                      background: "transparent",
-                      color: item.disabled
-                        ? "var(--reader-text-secondary)"
-                        : "var(--reader-text)",
-                      cursor: item.disabled ? "not-allowed" : "pointer",
-                      fontSize: "0.82rem",
-                      textAlign: "left",
-                      opacity: item.disabled ? 0.5 : 1,
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!item.disabled) e.target.style.background = "rgba(79,70,229,0.08)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = "transparent";
-                    }}
+                    onClick={() => setShowMenu(false)}
                   >
                     {item.label}
                   </button>

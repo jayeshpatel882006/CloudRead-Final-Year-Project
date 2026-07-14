@@ -1,0 +1,80 @@
+.cr-app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+}
+
+.cr-app-shell__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cr-app-shell__topbar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+}
+
+.cr-app-shell__topbar-wrap {
+  display: contents;
+}
+
+.cr-app-shell__content {
+  flex: 1;
+  padding: var(--layout-page-py) var(--layout-page-px-desktop);
+  outline: none;
+  max-width: 100%;
+  min-height: 100%;
+}
+
+.cr-app-shell__menu {
+  display: none;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.cr-app-shell__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(31, 26, 46, 0.45);
+  z-index: calc(var(--z-modal) - 1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--duration-slow) var(--ease-standard);
+}
+
+.cr-app-shell__backdrop[data-open="true"] {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+  .cr-app-shell__content {
+    padding: var(--layout-page-py) var(--layout-page-px-mobile);
+  }
+  .cr-app-shell__menu {
+    display: inline-flex;
+    position: fixed;
+    bottom: var(--space-4);
+    right: var(--space-4);
+    z-index: var(--z-sticky);
+    box-shadow: var(--elev-3);
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+  }
+}
