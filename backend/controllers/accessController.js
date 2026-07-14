@@ -282,7 +282,17 @@ export const getBookPage = async (req, res) => {
     }
     markStage("userLookup");
 
-    const today = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+    const timeStr = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const dateTimeStr = `${dateStr} ${timeStr}`;
 
     // ── [6] render → [7] PNG encode ────────────────────────────────
     let png;
@@ -295,7 +305,7 @@ export const getBookPage = async (req, res) => {
       png = await renderPageAsPng(book.filename, pageNum, {
         name: user?.name || "Student",
         email: user?.email || "",
-        date: today,
+        date: dateTimeStr,
       });
       console.log(TAG, `[7] encodePng ok`, {
         pageNum,

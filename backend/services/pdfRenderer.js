@@ -34,6 +34,7 @@ import { PNG } from "pngjs";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 import { UPLOAD_DIR } from "../config/multer.js";
+import { getWatermarkConfig } from "../config/watermark.js";
 
 // -----------------------------------------------------------------------------
 // pdfjs-dist v6 always validates `workerSrc`. We point it at the bundled
@@ -121,90 +122,106 @@ async function loadPdf(filename) {
 }
 
 // -----------------------------------------------------------------------------
-// Watermark compositing — done in raw RGBA, no canvas library needed.
+// Watermark compositing — uses @napi-rs/canvas to render rotated text at
+// low opacity on top of the rendered PDF page.
 //
-// We deliberately use a tile + caption pattern that DOES NOT need any font
-// renderer. This avoids the "TT: undefined function: N" crash class
-// entirely and keeps watermark rendering deterministic across platforms.
+// Rendering order (guaranteed):
+//   1. PDF page rendered to RGBA (done before this function is called)
+//   2. Watermark overlay created as a separate transparent canvas
+//   3. Overlay composited onto page RGBA at the configured opacity
+//
+// Why @napi-rs/canvas instead of raw pixel manipulation?
+//   - Canvas provides proper text rendering with anti-aliasing
+//   - Canvas transform handles rotation natively (no manual pixel math)
+//   - Text spacing, font, and alignment are all handled by Skia
+//   - The overlay is composited at the end, never drawn before the PDF
+//
+// Visual design (inspired by Google Books, VitalSource, Scribd):
+//   - Repeating diagonal lines of identifying text
+//   - Very low opacity (~8%) so content remains fully readable
+//   - Light gray color (not pure black or white)
+//   - 32° rotation — the standard angle used by professional platforms
+//   - Wide spacing to avoid dense overlapping
+//   - Font size and spacing scale with page dimensions
 // -----------------------------------------------------------------------------
 function compositeWatermark(rgba, width, height, options) {
   const { name, email, date, pageNumber } = options;
 
+  // Early exit if no identifying info — nothing to watermark
+  if (!name && !email) return Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength);
+
+  // ── 1. Load scaled config for this page size ───────────────────
+  const cfg = getWatermarkConfig(width, height);
+
+  // ── 2. Create overlay canvas (transparent background) ──────────
+  const overlayCanvas = createCanvas(width, height);
+  const overlayCtx = overlayCanvas.getContext("2d");
+  overlayCtx.clearRect(0, 0, width, height);
+
+  // ── 3. Configure watermark text style ──────────────────────────
+  overlayCtx.fillStyle = `rgb(${cfg.color.r}, ${cfg.color.g}, ${cfg.color.b})`;
+  overlayCtx.font = `${cfg.fontSize}px ${cfg.fontFamily}`;
+  overlayCtx.textAlign = "center";
+  overlayCtx.textBaseline = "middle";
+
+  // ── 4. Build watermark line ────────────────────────────────────
+  const parts = [String(name || "Student")];
+  if (email) parts.push(String(email));
+  if (date) parts.push(String(date));
+  if (pageNumber) parts.push(`p.${pageNumber}`);
+  const watermarkLine = parts.join("  ·  ");
+
+  // ── 5. Draw rotated repeating text ─────────────────────────────
+  const radians = (cfg.rotationDeg * Math.PI) / 180;
+
+  overlayCtx.save();
+  overlayCtx.translate(width / 2, height / 2);
+  overlayCtx.rotate(radians);
+
+  // Calculate grid dimensions to cover the rotated canvas area.
+  // The diagonal of the canvas gives us the maximum extent needed.
+  const diag = Math.sqrt(width * width + height * height);
+  const cols = Math.ceil(diag / cfg.spacingX) + 3;
+  const rows = Math.ceil(diag / cfg.spacingY) + 3;
+
+  for (let row = -rows; row <= rows; row++) {
+    for (let col = -cols; col <= cols; col++) {
+      const x = col * cfg.spacingX;
+      const y = row * cfg.spacingY;
+      overlayCtx.fillText(watermarkLine, x, y);
+    }
+  }
+
+  overlayCtx.restore();
+
+  // ── 6. Extract overlay pixel data ──────────────────────────────
+  const overlayData = overlayCtx.getImageData(0, 0, width, height);
+  const overlayPixels = new Uint8Array(
+    overlayData.data.buffer,
+    overlayData.data.byteOffset,
+    overlayData.data.byteLength,
+  );
+
+  // ── 7. Composite overlay onto page RGBA ────────────────────────
+  // Formula for each pixel:
+  //   alpha = overlay.alpha * config.opacity
+  //   result = page * (1 - alpha) + watermark_color * alpha
+  //
+  // This preserves the page content while blending in a faint
+  // watermark. The overlay's alpha channel tells us EXACTLY where
+  // the text was drawn (anti-aliased edges included).
   const out = Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength);
+  const opacity = cfg.opacity;
 
-  // 1. Translucent diagonal stripes.
-  const tileW = 320;
-  const tileH = 220;
-  const band = [120, 120, 120, 28];
-
-  for (let y = -tileH; y < height + tileH; y += tileH) {
-    for (let x = -tileW; x < width + tileW; x += tileW) {
-      for (let i = 0; i < tileW; i += 2) {
-        const yLine = y + i;
-        if (yLine < 0 || yLine >= height) continue;
-        for (let dx = 0; dx < 6; dx++) {
-          const yPx = yLine + dx;
-          if (yPx < 0 || yPx >= height) continue;
-          const xPx = x + i;
-          if (xPx < 0 || xPx >= width) continue;
-          const idx = (yPx * width + xPx) * 4;
-          out[idx]     = band[0];
-          out[idx + 1] = band[1];
-          out[idx + 2] = band[2];
-          if (out[idx + 3] < band[3]) out[idx + 3] = band[3];
-        }
-      }
+  for (let i = 0; i < out.length; i += 4) {
+    const overlayAlpha = overlayPixels[i + 3] / 255; // 0 (no text) to 1 (solid text)
+    if (overlayAlpha > 0.01) {
+      const blendAlpha = overlayAlpha * opacity;
+      out[i]     = Math.round(out[i]     * (1 - blendAlpha) + cfg.color.r * blendAlpha);
+      out[i + 1] = Math.round(out[i + 1] * (1 - blendAlpha) + cfg.color.g * blendAlpha);
+      out[i + 2] = Math.round(out[i + 2] * (1 - blendAlpha) + cfg.color.b * blendAlpha);
+      // Alpha channel unchanged — keeps the page's original transparency
     }
-  }
-
-  // 2. Center caption.
-  const captionW = Math.min(720, Math.floor(width * 0.7));
-  const captionH = 130;
-  const cx = Math.floor((width - captionW) / 2);
-  const cy = Math.floor((height - captionH) / 2);
-
-  for (let y = cy; y < cy + captionH; y++) {
-    for (let x = cx; x < cx + captionW; x++) {
-      if (x < 0 || x >= width || y < 0 || y >= height) continue;
-      const idx = (y * width + x) * 4;
-      out[idx]     = 250;
-      out[idx + 1] = 250;
-      out[idx + 2] = 250;
-      if (out[idx + 3] < 170) out[idx + 3] = 170;
-    }
-  }
-
-  const lines = [
-    String(name || "Student"),
-    String(email || ""),
-    String(date || ""),
-    `Page ${pageNumber}`,
-  ];
-
-  let row = 0;
-  for (const label of lines) {
-    if (!label) { row++; continue; }
-    const yBase = cy + 18 + row * 24;
-    const letterW = Math.min(20, Math.max(6, Math.floor(captionW / (label.length + 2))));
-    const startX = cx + Math.floor((captionW - letterW * label.length) / 2);
-    for (let i = 0; i < label.length; i++) {
-      const ch = label.charCodeAt(i);
-      for (let dy = 0; dy < 14; dy++) {
-        for (let dx = 0; dx < Math.max(8, letterW - 4); dx++) {
-          if (((ch + dx * 3 + dy * 7) & 7) < 5) {
-            const px = startX + i * letterW + dx;
-            const py = yBase + dy;
-            if (px < 0 || px >= width || py < 0 || py >= height) continue;
-            const idx = (py * width + px) * 4;
-            out[idx]     = 30;
-            out[idx + 1] = 30;
-            out[idx + 2] = 30;
-            out[idx + 3] = 255;
-          }
-        }
-      }
-    }
-    row++;
   }
 
   return out;
