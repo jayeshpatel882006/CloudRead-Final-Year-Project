@@ -1,381 +1,110 @@
 // pages/BookViewer.jsx
 // -----------------------------------------------------------------------------
-// Secure, lazy-loading, CANVAS-BASED PDF viewer.
+// Professional full-screen e-book reader.
 //
-// Pipeline per page:
+// Architecture:
+//   ┌──────────────────────────────────────────────────────────┐
+//   │  ReaderToolbar (floating glassmorphism, auto-hide)      │
+//   ├──────────────────────────────────────────────────────────┤
+//   │                                                         │
+//   │  ┌──── ReaderSidebar ────┐  ┌── Reading Area ────────┐ │
+//   │  │ (collapsible)         │  │                         │ │
+//   │  │ Book cover            │  │  PageCanvas 1          │ │
+//   │  │ Book details          │  │  PageCanvas 2          │ │
+//   │  │ Bookmarks (future)    │  │  PageCanvas 3 ...      │ │
+//   │  │ TOC (future)          │  │                         │ │
+//   │  └────────────────────────┘  └────────────────────────┘ │
+//   │                                    ┌── FloatingActions │
+//   │                                    │  (right side)     │
+//   ├──────────────────────────────────────────────────────────┤
+//   │  PageIndicator (bottom pill)                             │
+//   └──────────────────────────────────────────────────────────┘
 //
-//   PageCanvas mounts (status = "idle")
-//        │
-//        ▼
-//   fetch GET /api/access/book/:bookId/page/:n  →  response
-//        │
-//        ├── image/png bytes ──────────────────────── SUCCESS
-//        │   new Blob([bytes], { type:'image/png' })
-//        │   createImageBitmap(blob)          ← NO URL.createObjectURL, NO <img>
-//        │   <canvas>.getContext('2d').drawImage(bitmap, 0, 0)
-//        │   status = "loaded"
-//        │
-//        └── application/json ─────────────────────── FAILURE
-//            parse { message, stage, code }
-//            status = "failed"
-//            if code === 403|404|410 → canRetry = false
-//            show Retry button only if canRetry
-//
-// Lazy loading strategy:
-//   - Page 1 is mounted and fetched immediately.
-//   - A sentinel element is placed after the last mounted page.
-//   - IntersectionObserver watches the sentinel. When it enters the
-//     viewport, we extend the visible range: one more page mounts
-//     and begins fetching.
-//   - This gives TRUE sequential on-demand loading:
-//     "Load page 1 → user scrolls → load page 2 → scroll → page 3"
-//   - No pre-fetching. No batch loading. Each page loads exactly when
-//     the user scrolls near the end of the loaded content.
-//
-// Virtualization:
-//   - Only pages [1, visibleUpTo] are mounted.
-//   - Pages beyond visibleUpTo are unmounted and their ImageBitmaps freed.
-//   - With a 500-page PDF, only ~1-3 pages are ever in the DOM at once.
-//
-// Retry policy:
-//   - A page that fails is NEVER automatically retried.
-//   - The user sees a Retry button (unless canRetry === false).
-//   - Only a manual Retry click triggers a new fetch.
-//   - Failed pages are tracked in a module-level Set so they don't
-//     re-fetch on remount.
-//
-// JSON error detection:
-//   - If response content-type is application/json, parse it,
-//     display the server message, and (if stage is non-recoverable)
-//     prevent retry.
-// ──────────────────────────────────────────────────────────────────────────────
+// Features:
+//   - Full-screen (no navbar, no sidebar, no footer)
+//   - Floating glassmorphism toolbar with auto-hide
+//   - Collapsible left sidebar with book info
+//   - Right-side floating action buttons
+//   - Bottom page indicator pill
+//   - Lazy loading via IntersectionObserver
+//   - Zoom controls (+, -, fit width, fit page)
+//   - Keyboard shortcuts (↑↓ zoom fullscreen)
+//   - Light/Dark theme toggle
+//   - Responsive (desktop, tablet, mobile)
+//   - Fade-in page animations
+// -----------------------------------------------------------------------------
 
-import { useEffect, useLayoutEffect, useRef, useState, useCallback, memo } from "react";
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../services/api";
-import Layout from "../components/Layout";
 import Loader from "../components/Loader";
 import { toast } from "react-toastify";
-import "../css/bookviewer.css";
+
+import { FiSidebar } from "react-icons/fi";
+import ReaderToolbar from "../components/reader/ReaderToolbar";
+import ReaderSidebar from "../components/reader/ReaderSidebar";
+import PageCanvas from "../components/reader/PageCanvas";
+import FloatingActions from "../components/reader/FloatingActions";
+import PageIndicator from "../components/reader/PageIndicator";
+import "../css/reader.css";
 
 const TAG = "[BookViewer]";
+const MOUNT_AHEAD = 2; // pages to mount ahead of current
+const ROOT_MARGIN = "1000px"; // how far ahead to trigger loading
 
-// How many extra pages ahead to mount beyond visibleUpTo.
-// 0 = true sequential: page N loads → user scrolls → page N+1 mounts.
-// 1 = one page pre-fetched ahead for smoother scrolling.
-const MOUNT_AHEAD = 0;
+// ── Module-level failed-pages set is managed by PageCanvas ──
 
-// IntersectionObserver rootMargin for the sentinel.
-// A large bottom margin triggers loading before the user reaches the gap.
-const ROOT_MARGIN_BOTTOM = "1000px";
-
-// Module-level set of permanently failed page numbers.
-// Pages in this set will never auto-fetch on mount.
-const failedPages = new Set();
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Per-page component.
-//
-// Lifecycle:
-//   1. On mount: attemptRef++ (invalidate old), set status="loading".
-//   2. fetch bytes → inspect headers → either:
-//        a) image/png → createImageBitmap → draw to canvas → "loaded"
-//        b) application/json → parse → "failed", canRetry based on stage
-//   3. On unmount: cleanup bitmap, invalidate fetch.
-//   4. NEVER auto-retries. Retry only on user click.
-//   5. Failed pages are tracked in module-level Set to survive remounts.
-//
-// NOTE: Uses createImageBitmap + canvas.drawImage.
-//       NO URL.createObjectURL, NO <img>, NO Blob URLs.
-// ──────────────────────────────────────────────────────────────────────────────
-function PageCanvas({ bookId, pageNum }) {
-  const canvasRef = useRef(null);
-  const bitmapRef = useRef(null);
-  const attemptRef = useRef(0);
-  const mountedRef = useRef(true);
-
-  const [status, setStatus] = useState(() => {
-    if (failedPages.has(pageNum)) return "failed";
-    return "loading";
-  });
-  const [errorMsg, setErrorMsg] = useState("");
-  const [errorStage, setErrorStage] = useState("");
-  const [canRetry, setCanRetry] = useState(true);
-
-  // ── Draw bitmap onto canvas ───────────────────────────────────────
-  const drawBitmap = useCallback(() => {
-    const canvas = canvasRef.current;
-    const bitmap = bitmapRef.current;
-    if (!canvas || !bitmap) return;
-
-    if (canvas.width !== bitmap.width) canvas.width = bitmap.width;
-    if (canvas.height !== bitmap.height) canvas.height = bitmap.height;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.drawImage(bitmap, 0, 0);
-  }, []);
-
-  // ── Fetch the page data ───────────────────────────────────────────
-  const fetchOnce = useCallback(async () => {
-    const attempt = ++attemptRef.current;
-
-    setStatus("loading");
-    setErrorMsg("");
-    setErrorStage("");
-    failedPages.delete(pageNum);
-
-    try {
-      const res = await API.get(
-        `/access/book/${bookId}/page/${pageNum}`,
-        { responseType: "arraybuffer", timeout: 30000 },
-      );
-
-      if (!mountedRef.current || attempt !== attemptRef.current) return;
-
-      const contentType =
-        res.headers?.["content-type"] ||
-        res.headers?.["Content-Type"] ||
-        "";
-
-      // ── Detect JSON error response ─────────────────────────────
-      if (contentType.includes("application/json")) {
-        const decoder = new TextDecoder();
-        let payload;
-        try {
-          payload = JSON.parse(decoder.decode(res.data));
-        } catch {
-          payload = { message: "Invalid JSON error response" };
-        }
-        console.error(TAG, `page ${pageNum} FAILED (JSON)`, {
-          message: payload?.message,
-          stage: payload?.stage,
-          code: payload?.code,
-        });
-        const retry =
-          payload?.stage === "renderPage" ||
-          payload?.code === "RENDER_FAILED" ||
-          payload?.code === "ENCODE_FAILED" ||
-          !payload?.stage;
-        setStatus("failed");
-        setErrorMsg(payload?.message || "Page failed");
-        setErrorStage(payload?.stage || "");
-        setCanRetry(retry);
-        if (!retry) failedPages.add(pageNum);
-        return;
-      }
-
-      // ── Validate content type ──────────────────────────────────
-      if (!contentType.includes("image/png") || !res.data?.byteLength) {
-        console.error(TAG, `page ${pageNum} FAILED (bad mime)`, {
-          contentType,
-          byteLength: res.data?.byteLength,
-        });
-        setStatus("failed");
-        setErrorMsg(
-          `Unexpected response (${contentType || "no content-type"})`,
-        );
-        setErrorStage("transport");
-        setCanRetry(true);
-        return;
-      }
-
-      // ── Decode PNG to ImageBitmap ──────────────────────────────
-      const blob = new Blob([res.data], { type: "image/png" });
-
-      let bitmap;
-      try {
-        bitmap = await createImageBitmap(blob);
-      } catch (e) {
-        console.error(TAG, `page ${pageNum} createImageBitmap FAILED`, e);
-        setStatus("failed");
-        setErrorMsg(`Image decode failed: ${e.message}`);
-        setErrorStage("decode");
-        setCanRetry(true);
-        return;
-      }
-
-      if (!mountedRef.current || attempt !== attemptRef.current) {
-        bitmap.close?.();
-        return;
-      }
-
-      // Close previous bitmap
-      if (bitmapRef.current) bitmapRef.current.close?.();
-      bitmapRef.current = bitmap;
-
-      // Draw to canvas (imperative — no DOM update needed)
-      drawBitmap();
-
-      setStatus("loaded");
-      setErrorMsg("");
-      setErrorStage("");
-      console.debug(TAG, `page ${pageNum} loaded`, {
-        width: bitmap.width,
-        height: bitmap.height,
-      });
-    } catch (err) {
-      if (!mountedRef.current || attempt !== attemptRef.current) return;
-
-      const statusCode = err.response?.status;
-      const dataType = err.response?.headers?.["content-type"] || "";
-      let message = err.message || "Failed to load page";
-      let retry = true;
-
-      // Parse JSON error body
-      if (dataType.includes("application/json") && err.response?.data) {
-        try {
-          const txt = new TextDecoder().decode(err.response.data);
-          const payload = JSON.parse(txt);
-          message = payload?.message || message;
-          retry =
-            payload?.stage === "renderPage" ||
-            payload?.code === "RENDER_FAILED" ||
-            payload?.code === "ENCODE_FAILED" ||
-            !payload?.stage;
-        } catch {
-          /* ignore */
-        }
-      }
-
-      if (statusCode === 410) { message = "Access expired"; retry = false; } 
-      else if (statusCode === 404) { message = "Page not found"; retry = false; } 
-      else if (statusCode === 403) { message = "Access denied"; retry = false; }
-
-      console.error(TAG, `page ${pageNum} FAILED (throw)`, {
-        status: statusCode,
-        message,
-      });
-
-      setStatus("failed");
-      setErrorMsg(message);
-      setErrorStage(statusCode ? `http-${statusCode}` : "");
-      setCanRetry(retry);
-      if (!retry) failedPages.add(pageNum);
-    }
-  }, [bookId, pageNum, drawBitmap]);
-
-  // ── Fetch on mount ───────────────────────────────────────────────
-  useEffect(() => {
-    mountedRef.current = true;
-
-    if (!failedPages.has(pageNum)) {
-      fetchOnce();
-    }
-
-    return () => {
-      mountedRef.current = false;
-      attemptRef.current++;
-      if (bitmapRef.current) {
-        bitmapRef.current.close?.();
-        bitmapRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageNum]);
-
-  // ── Manual retry ──────────────────────────────────────────────────
-  const handleRetry = useCallback(() => {
-    console.debug(TAG, `manual retry page ${pageNum}`);
-    fetchOnce();
-  }, [fetchOnce, pageNum]);
-
-  // Redraw bitmap on re-render if canvas element changed
-  useEffect(() => {
-    if (status === "loaded") drawBitmap();
-  }, [status, drawBitmap]);
-
-  return (
-    <div className="bookviewer-page" data-page={pageNum}>
-      {/* Canvas — always mounted for stable ref, hidden until loaded */}
-      <canvas
-        ref={canvasRef}
-        className="bookviewer-canvas"
-        aria-label={`Page ${pageNum}`}
-        style={{
-          display: status === "loaded" ? "block" : "none",
-          width: "100%",
-          height: "auto",
-        }}
-      />
-
-      {/* Loading skeleton */}
-      {status === "loading" && (
-        <div className="page-skeleton" data-page={pageNum}>
-          <Loader inline />
-          <span>Loading page {pageNum}…</span>
-        </div>
-      )}
-
-      {/* Failed state */}
-      {status === "failed" && (
-        <div className="page-error" data-page={pageNum}>
-          <p>📕 Could not load page {pageNum}</p>
-          {errorMsg && <p className="page-error-detail">{errorMsg}</p>}
-          {errorStage && (
-            <p className="page-error-stage">stage: {errorStage}</p>
-          )}
-          {canRetry && (
-            <button
-              type="button"
-              className="page-retry-btn"
-              onClick={handleRetry}
-            >
-              Retry
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// Memo so parent re-renders don't re-mount PageCanvas instances unnecessarily.
-const MemoPageCanvas = memo(PageCanvas);
-
-// ──────────────────────────────────────────────────────────────────────────────
-// BookViewer — owns metadata, lazy-loading range, IntersectionObserver.
-// ──────────────────────────────────────────────────────────────────────────────
+// ── Main Reader Component ──────────────────────────────
 const BookViewer = () => {
   const { bookId } = useParams();
   const navigate = useNavigate();
 
+  // State
   const [meta, setMeta] = useState(null);
-  // visibleUpTo = the highest page number whose content has been "revealed".
-  // Only pages 1..visibleUpTo are mounted. Starts at 1 (page 1 loads first).
   const [visibleUpTo, setVisibleUpTo] = useState(0);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isDark, setIsDark] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoom, setZoom] = useState(100);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [metaLoading, setMetaLoading] = useState(true);
+  const [metaError, setMetaError] = useState(null);
 
-  // Stable IntersectionObserver ref — created once, lives for component lifetime.
+  // Refs
+  const scrollRef = useRef(null);
   const observerRef = useRef(null);
-  // Ref to the sentinel element placed after the last mounted page.
   const sentinelRef = useRef(null);
-  // Map of page number → DOM element for observed page containers.
   const pageRefs = useRef(new Map());
+  const containerRef = useRef(null);
 
-  // ── Metadata fetch ───────────────────────────────────────────────
+  // ── Metadata fetch ─────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+    setMetaLoading(true);
+    setMetaError(null);
+
     (async () => {
       try {
         console.debug(TAG, "fetching book info", { bookId });
         const { data } = await API.get(`/access/book/${bookId}/info`);
         if (!cancelled) {
           setMeta(data);
-          setVisibleUpTo(1); // Start with page 1
+          setVisibleUpTo(1);
+          setMetaLoading(false);
           console.debug(TAG, "book info received", data);
         }
       } catch (err) {
         if (cancelled) return;
         const status = err.response?.status;
+        setMetaLoading(false);
+        setMetaError(status || "unknown");
         console.error(TAG, "info fetch failed", { status, bookId });
+
         if (status === 401) {
           toast.error("Please log in to view this book.");
           navigate("/login");
         } else if (status === 403) {
-          toast.error(
-            "Access denied. Request access from your dashboard first.",
-          );
+          toast.error("Access denied. Request access from your dashboard first.");
         } else if (status === 410) {
           toast.error("Your access to this book has expired.");
         } else if (status === 404) {
@@ -385,93 +114,290 @@ const BookViewer = () => {
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+
+    return () => { cancelled = true; };
   }, [bookId, navigate]);
 
-  // ── Create IntersectionObserver once ─────────────────────────────
+  // ── IntersectionObserver for lazy loading ──────────────────────
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
-          const pageAttr = entry.target.dataset?.page;
-          if (!pageAttr) continue;
-          const pageNum = parseInt(pageAttr, 10);
-          if (Number.isFinite(pageNum) && pageNum > 0) {
-            setVisibleUpTo((cur) => Math.max(cur, pageNum));
+          const p = parseInt(entry.target.dataset?.page || "0", 10);
+          if (p > 0) {
+            setVisibleUpTo((cur) => Math.max(cur, p));
           }
         }
       },
-      { rootMargin: `0px 0px ${ROOT_MARGIN_BOTTOM} 0px` },
+      { rootMargin: `0px 0px ${ROOT_MARGIN} 0px` },
     );
-
     observerRef.current = observer;
+    return () => observer.disconnect();
+  }, []);
 
-    return () => {
-      observer.disconnect();
-      observerRef.current = null;
-    };
-  }, []); // Stable for component lifetime
-
-  // ── Sync observer targets when visible range changes ─────────────
-  // useLayoutEffect runs synchronously after DOM mutations but BEFORE
-  // the browser paints. This eliminates the <1ms gap where the old
-  // sentinel is gone and the new one isn't yet observed.
+  // ── Sync observer targets ────────────────────────────────────
   useLayoutEffect(() => {
     const observer = observerRef.current;
     if (!observer || !meta) return;
 
-    // Disconnect all, then re-observe relevant targets
     observer.disconnect();
-
-    pageRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current);
-    }
+    pageRefs.current.forEach((el) => { if (el) observer.observe(el); });
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
   }, [visibleUpTo, meta]);
 
-  if (!meta) {
+  // ── Track current page on scroll ──────────────────────────────
+  useEffect(() => {
+    const scrollArea = scrollRef.current;
+    if (!scrollArea) return;
+
+    const handler = () => {
+      // Find the page closest to viewport center
+      const viewportCenter = window.innerHeight / 2;
+      let bestPage = 1;
+      let bestDistance = Infinity;
+
+      pageRefs.current.forEach((el, pageNum) => {
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const elCenter = rect.top + rect.height / 2;
+        const dist = Math.abs(elCenter - viewportCenter);
+        if (dist < bestDistance) {
+          bestDistance = dist;
+          bestPage = pageNum;
+        }
+      });
+
+      if (bestPage !== currentPage) {
+        setCurrentPage(bestPage);
+      }
+    };
+
+    scrollArea.addEventListener("scroll", handler, { passive: true });
+    return () => scrollArea.removeEventListener("scroll", handler);
+  }, [currentPage, meta]);
+
+  // ── Fullscreen API ────────────────────────────────────────────
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.() || el.webkitRequestFullscreen?.();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.() || document.webkitExitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  }, []);
+
+  // ── Keyboard shortcuts ────────────────────────────────────────
+  useEffect(() => {
+    const handler = (e) => {
+      // Ignore if user is typing in an input
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+
+      switch (e.key) {
+        case "ArrowDown":
+          e.preventDefault();
+          scrollRef.current?.scrollBy({ top: 600, behavior: "smooth" });
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          scrollRef.current?.scrollBy({ top: -600, behavior: "smooth" });
+          break;
+        case "=":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            setZoom((z) => Math.min(200, z + 10));
+          }
+          break;
+        case "-":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            setZoom((z) => Math.max(50, z - 10));
+          }
+          break;
+        case "0":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            setZoom(100);
+          }
+          break;
+        case "f":
+        case "F":
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            toggleFullscreen();
+          }
+          break;
+        case "Escape":
+          if (document.fullscreenElement) {
+            toggleFullscreen();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [toggleFullscreen]);
+
+  // ── Fullscreen change listener ───────────────────────────────
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", handler);
+    document.addEventListener("webkitfullscreenchange", handler);
+    return () => {
+      document.removeEventListener("fullscreenchange", handler);
+      document.removeEventListener("webkitfullscreenchange", handler);
+    };
+  }, []);
+
+  // ── Navigate back ─────────────────────────────────────────────
+  const goBack = useCallback(() => navigate("/student"), [navigate]);
+
+  // ── Zoom handlers ─────────────────────────────────────────────
+  const handleZoomChange = useCallback((val) => {
+    setZoom(Math.max(50, Math.min(200, val)));
+  }, []);
+
+  const handleFitWidth = useCallback(() => setZoom(100), []);
+  const handleFitPage = useCallback(() => setZoom(80), []);
+
+  // ── Theme toggle ──────────────────────────────────────────────
+  const toggleTheme = useCallback(() => setIsDark((d) => !d), []);
+
+  // ── Go to top ────────────────────────────────────────────────
+  const goToTop = useCallback(() => {
+    scrollRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  // ── Navigate pages ────────────────────────────────────────────
+  const goToPrevPage = useCallback(() => {
+    const scrollArea = scrollRef.current;
+    if (!scrollArea) return;
+    scrollArea.scrollBy({ top: -scrollArea.clientHeight * 0.8, behavior: "smooth" });
+  }, []);
+
+  const goToNextPage = useCallback(() => {
+    const scrollArea = scrollRef.current;
+    if (!scrollArea) return;
+    scrollArea.scrollBy({ top: scrollArea.clientHeight * 0.8, behavior: "smooth" });
+  }, []);
+
+  // ── Loading State ────────────────────────────────────────────
+  if (metaLoading) {
     return (
-      <Layout>
-        <Loader />
-      </Layout>
+      <div className="reader-container">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh" }}>
+          <Loader />
+        </div>
+      </div>
     );
   }
 
-  const total = meta.totalPages;
+  // ── Error State ──────────────────────────────────────────────
+  if (metaError || !meta) {
+    return (
+      <div className="reader-container">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100vh", gap: 16, padding: 24, textAlign: "center" }}>
+          <h2 style={{ color: "#b91c1c", margin: 0 }}>Could not open book</h2>
+          <p style={{ color: "var(--reader-text-secondary)", maxWidth: 400 }}>
+            {metaError === 403 && "Access denied. Please request access from your dashboard."}
+            {metaError === 410 && "Your access to this book has expired."}
+            {metaError === 404 && "Book not found."}
+            {metaError === "unknown" && "An error occurred while loading the book."}
+          </p>
+          <button
+            onClick={goBack}
+            style={{
+              padding: "10px 24px",
+              borderRadius: 8,
+              border: "none",
+              background: "var(--reader-accent)",
+              color: "white",
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            Back to Library
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  // Mount pages [1, visibleUpTo + MOUNT_AHEAD], clamped to total.
-  // With MOUNT_AHEAD=0, only 1 page mounts at a time.
+  // ── Calculate mounted page range ─────────────────────────────
+  const total = meta.totalPages || 0;
   const mountEnd = Math.min(total, visibleUpTo + MOUNT_AHEAD);
-
-  // Build the array of page numbers to mount
   const mountedPages = [];
   for (let p = 1; p <= mountEnd; p++) mountedPages.push(p);
 
+  // ── Render ────────────────────────────────────────────────────
   return (
-    <Layout>
-      <div className="bookviewer-container">
-        <header className="bookviewer-header">
-          <button
-            className="bookviewer-back"
-            onClick={() => navigate("/student")}
-          >
-            ← Back
-          </button>
-          <div>
-            <h2>{meta.title}</h2>
-            <p>
-              by {meta.author} · {total} pages
-            </p>
-          </div>
-        </header>
+    <div
+      ref={containerRef}
+      className={`reader-container ${isDark ? "reader-dark" : ""}`}
+    >
+      {/* ── Toolbar ──────────────────────────────── */}
+      <ReaderToolbar
+        title={meta.title}
+        currentPage={currentPage}
+        totalPages={total}
+        zoom={zoom}
+        onZoomChange={handleZoomChange}
+        onFitWidth={handleFitWidth}
+        onFitPage={handleFitPage}
+        onFullscreen={toggleFullscreen}
+        isFullscreen={isFullscreen}
+        onThemeToggle={toggleTheme}
+        isDark={isDark}
+        onBack={goBack}
+        onSearch={() => toast.info("Search coming soon")}
+        onPrevPage={goToPrevPage}
+        onNextPage={goToNextPage}
+      />
 
-        <div className="bookviewer-pages">
+      {/* ── Sidebar Toggle ─────────────────────────── */}
+      <button
+        className="reader-toolbar-btn"
+        onClick={() => setSidebarOpen(true)}
+        title="Book Info"
+        style={{
+          position: "fixed",
+          left: 12,
+          bottom: 80,
+          zIndex: 1020,
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          border: "none",
+          background: "var(--reader-toolbar-bg)",
+          backdropFilter: "blur(8px)",
+          cursor: "pointer",
+          color: "var(--reader-text-secondary)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+        }}
+      >
+        <FiSidebar size={16} />
+      </button>
+
+      <ReaderSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        meta={meta}
+        currentPage={currentPage}
+      />
+
+      {/* ── Reading Area ─────────────────────────── */}
+      <div className="reader-scroll-area" ref={scrollRef}>
+        <div className="reader-pages">
           {mountedPages.map((pageNum) => (
             <div
               key={pageNum}
@@ -480,32 +406,40 @@ const BookViewer = () => {
                 else pageRefs.current.delete(pageNum);
               }}
               data-page={pageNum}
+              style={{ width: "100%" }}
             >
-              <MemoPageCanvas bookId={bookId} pageNum={pageNum} />
+              <PageCanvas
+                bookId={bookId}
+                pageNum={pageNum}
+                zoom={zoom}
+              />
             </div>
           ))}
 
-          {/* Sentinel: placed with data-page=mountEnd+1.
-              When it scrolls into view, visibleUpTo advances
-              and one more page mounts. */}
+          {/* Sentinel for lazy loading */}
           {mountEnd < total && (
             <div
               ref={sentinelRef}
-              className="bookviewer-sentinel"
+              className="reader-sentinel"
               data-page={mountEnd + 1}
             >
-              <span className="bookviewer-sentinel-hint">
-                Scroll for more
-              </span>
+              <Loader inline />
+              <span>Loading more pages…</span>
             </div>
           )}
 
           {mountEnd >= total && total > 0 && (
-            <div className="bookviewer-end">🎉 End of book</div>
+            <div className="reader-end">🎉 You've reached the end of this book</div>
           )}
         </div>
       </div>
-    </Layout>
+
+      {/* ── Floating Actions ─────────────────────── */}
+      <FloatingActions currentPage={currentPage} onGoToTop={goToTop} />
+
+      {/* ── Page Indicator ───────────────────────── */}
+      <PageIndicator currentPage={currentPage} totalPages={total} />
+    </div>
   );
 };
 

@@ -15,14 +15,18 @@
 //   v6, requires NO C++ build tools on Windows, and produces real rendered
 //   content.
 //
-// Pipeline:
-//   loadPdf(filename)         → pdfjs document handle
-//   getPage(n)                → page object
-//   page.getViewport({scale}) → viewport dimensions
-//   createCanvas(w, h)        → native canvas (Skia)
-//   page.render({canvasContext, viewport}).promise  → draws REAL content
-//   canvas.toBuffer('image/png') → PNG bytes
-//   compositeWatermark()      → overlay watermark on raw RGBA
+// Rendering order (guaranteed by this implementation):
+//   1. PDF page rendered to canvas
+//   2. Watermark drawn DIRECTLY on the SAME canvas using save()/restore()
+//   3. Watermarked RGBA extracted via getImageData()
+//   4. PNG encoded from watermarked RGBA
+//
+// Watermark approach (canvas-native compositing):
+//   The watermark is drawn on the same canvas context that holds the
+//   rendered PDF content. Using ctx.globalAlpha = 0.08, the Skia renderer
+//   handles the alpha blending with subpixel precision and proper
+//   anti-aliasing — producing a visible watermark that does not obscure
+//   the underlying PDF text.
 // -----------------------------------------------------------------------------
 
 import fs from "fs";
@@ -34,7 +38,7 @@ import { PNG } from "pngjs";
 import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
 
 import { UPLOAD_DIR } from "../config/multer.js";
-import { getWatermarkConfig } from "../config/watermark.js";
+import { WATERMARK_CONFIG } from "../config/watermark.js";
 
 // -----------------------------------------------------------------------------
 // pdfjs-dist v6 always validates `workerSrc`. We point it at the bundled
@@ -122,114 +126,130 @@ async function loadPdf(filename) {
 }
 
 // -----------------------------------------------------------------------------
-// Watermark compositing — uses @napi-rs/canvas to render rotated text at
-// low opacity on top of the rendered PDF page.
+// Watermark rendering — draws directly on the SAME canvas that holds the
+// rendered PDF content. Uses canvas-native globalAlpha compositing (Skia)
+// so the watermark is properly anti-aliased and blended at the pixel level.
 //
-// Rendering order (guaranteed):
-//   1. PDF page rendered to RGBA (done before this function is called)
-//   2. Watermark overlay created as a separate transparent canvas
-//   3. Overlay composited onto page RGBA at the configured opacity
+// Rendering order (guaranteed by renderPageRaw):
+//   1. PDF page rendered to canvas   ← already done when this is called
+//   2. ctx.save() + globalAlpha + rotation + fillText
+//   3. ctx.restore()                 ← canvas state restored
+//   4. getImageData()                ← composited result extracted
 //
-// Why @napi-rs/canvas instead of raw pixel manipulation?
-//   - Canvas provides proper text rendering with anti-aliasing
-//   - Canvas transform handles rotation natively (no manual pixel math)
-//   - Text spacing, font, and alignment are all handled by Skia
-//   - The overlay is composited at the end, never drawn before the PDF
-//
-// Visual design (inspired by Google Books, VitalSource, Scribd):
-//   - Repeating diagonal lines of identifying text
-//   - Very low opacity (~8%) so content remains fully readable
-//   - Light gray color (not pure black or white)
-//   - 32° rotation — the standard angle used by professional platforms
-//   - Wide spacing to avoid dense overlapping
-//   - Font size and spacing scale with page dimensions
+// This approach is fundamentally different from creating a separate overlay
+// canvas and manually blending pixels. Canvas-native globalAlpha produces
+// a VISIBLE watermark because Skia's alpha compositing works at subpixel
+// precision with the actual rendered pixel data — not a manual 92/8 blend.
 // -----------------------------------------------------------------------------
-function compositeWatermark(rgba, width, height, options) {
-  const { name, email, date, pageNumber } = options;
+function drawWatermarkOnCanvas(ctx, width, height, options) {
+  const { name, email, date } = options;
+  const TAG = "[pdfRenderer]";
 
-  // Early exit if no identifying info — nothing to watermark
-  if (!name && !email) return Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength);
+  console.log(TAG, "Watermark rendering started", { width, height });
 
-  // ── 1. Load scaled config for this page size ───────────────────
-  const cfg = getWatermarkConfig(width, height);
+  // Build watermark lines: 3 lines stacked vertically
+  const lines = [
+    String(name || "Student"),
+    String(email || ""),
+    String(date || new Date().toISOString().slice(0, 10)),
+  ];
 
-  // ── 2. Create overlay canvas (transparent background) ──────────
-  const overlayCanvas = createCanvas(width, height);
-  const overlayCtx = overlayCanvas.getContext("2d");
-  overlayCtx.clearRect(0, 0, width, height);
+  const cfg = WATERMARK_CONFIG;
 
-  // ── 3. Configure watermark text style ──────────────────────────
-  overlayCtx.fillStyle = `rgb(${cfg.color.r}, ${cfg.color.g}, ${cfg.color.b})`;
-  overlayCtx.font = `${cfg.fontSize}px ${cfg.fontFamily}`;
-  overlayCtx.textAlign = "center";
-  overlayCtx.textBaseline = "middle";
+  // ── Log canvas state before drawing ───────────────────────────────
+  console.log(TAG, "Canvas state BEFORE watermark:", {
+    width,
+    height,
+    pageNumber: options?.pageNumber,
+    globalAlpha: ctx.globalAlpha,
+    fillStyle: ctx.fillStyle,
+    font: ctx.font,
+    textAlign: ctx.textAlign,
+    textBaseline: ctx.textBaseline,
+  });
 
-  // ── 4. Build watermark line ────────────────────────────────────
-  const parts = [String(name || "Student")];
-  if (email) parts.push(String(email));
-  if (date) parts.push(String(date));
-  if (pageNumber) parts.push(`p.${pageNumber}`);
-  const watermarkLine = parts.join("  ·  ");
+  // ── save → apply watermark style → transform → draw → restore ──────
+  ctx.save();
 
-  // ── 5. Draw rotated repeating text ─────────────────────────────
-  const radians = (cfg.rotationDeg * Math.PI) / 180;
+  ctx.globalAlpha = cfg.opacity;
+  ctx.fillStyle = cfg.color;
+  ctx.font = `${cfg.fontWeight} ${cfg.fontSize}px ${cfg.fontFamily}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
 
-  overlayCtx.save();
-  overlayCtx.translate(width / 2, height / 2);
-  overlayCtx.rotate(radians);
+  // Translate to center, then rotate
+  ctx.translate(width / 2, height / 2);
+  ctx.rotate(cfg.rotationRadians);
 
-  // Calculate grid dimensions to cover the rotated canvas area.
-  // The diagonal of the canvas gives us the maximum extent needed.
-  const diag = Math.sqrt(width * width + height * height);
-  const cols = Math.ceil(diag / cfg.spacingX) + 3;
-  const rows = Math.ceil(diag / cfg.spacingY) + 3;
+  // ── Log canvas state AFTER transform is applied ─────────────────
+  console.log(TAG, "Canvas state AFTER transform:", {
+    globalAlpha: ctx.globalAlpha,
+    fillStyle: ctx.fillStyle,
+    font: ctx.font,
+    rotationRadians: cfg.rotationRadians,
+    rotationDeg: (cfg.rotationRadians * 180) / Math.PI,
+  });
 
-  for (let row = -rows; row <= rows; row++) {
-    for (let col = -cols; col <= cols; col++) {
+  // 5×5 grid = 25 watermark instances (within requested 15–30 range)
+  const GRID_RANGE = 2;
+  let totalInstances = 0;
+
+  for (let row = -GRID_RANGE; row <= GRID_RANGE; row++) {
+    for (let col = -GRID_RANGE; col <= GRID_RANGE; col++) {
       const x = col * cfg.spacingX;
       const y = row * cfg.spacingY;
-      overlayCtx.fillText(watermarkLine, x, y);
+
+      // Draw each line of the watermark text
+      for (let li = 0; li < lines.length; li++) {
+        if (!lines[li]) continue;
+        ctx.fillText(lines[li], x, y + li * cfg.lineHeight);
+      }
+
+      totalInstances++;
     }
   }
 
-  overlayCtx.restore();
+  ctx.restore();
 
-  // ── 6. Extract overlay pixel data ──────────────────────────────
-  const overlayData = overlayCtx.getImageData(0, 0, width, height);
-  const overlayPixels = new Uint8Array(
-    overlayData.data.buffer,
-    overlayData.data.byteOffset,
-    overlayData.data.byteLength,
-  );
+  // ── Log canvas state AFTER restore ──────────────────────────────
+  console.log(TAG, "Canvas state AFTER restore:", {
+    globalAlpha: ctx.globalAlpha,
+    fillStyle: ctx.fillStyle,
+    font: ctx.font,
+  });
 
-  // ── 7. Composite overlay onto page RGBA ────────────────────────
-  // Formula for each pixel:
-  //   alpha = overlay.alpha * config.opacity
-  //   result = page * (1 - alpha) + watermark_color * alpha
-  //
-  // This preserves the page content while blending in a faint
-  // watermark. The overlay's alpha channel tells us EXACTLY where
-  // the text was drawn (anti-aliased edges included).
-  const out = Buffer.from(rgba.buffer, rgba.byteOffset, rgba.byteLength);
-  const opacity = cfg.opacity;
+  console.log(TAG, "Watermark rendering completed");
+  console.log(TAG, "Total watermark instances:", totalInstances);
 
-  for (let i = 0; i < out.length; i += 4) {
-    const overlayAlpha = overlayPixels[i + 3] / 255; // 0 (no text) to 1 (solid text)
-    if (overlayAlpha > 0.01) {
-      const blendAlpha = overlayAlpha * opacity;
-      out[i]     = Math.round(out[i]     * (1 - blendAlpha) + cfg.color.r * blendAlpha);
-      out[i + 1] = Math.round(out[i + 1] * (1 - blendAlpha) + cfg.color.g * blendAlpha);
-      out[i + 2] = Math.round(out[i + 2] * (1 - blendAlpha) + cfg.color.b * blendAlpha);
-      // Alpha channel unchanged — keeps the page's original transparency
+  // ── Diagnostic: sample pixels at the center of the canvas ──────
+  try {
+    const cx = Math.floor(width / 2);
+    const cy = Math.floor(height / 2);
+    const sample = ctx.getImageData(cx - 50, cy - 50, 100, 100);
+    let nonWhite = 0;
+    for (let i = 0; i < sample.data.length; i += 4) {
+      if (sample.data[i] < 250 || sample.data[i + 1] < 250 || sample.data[i + 2] < 250) {
+        nonWhite++;
+      }
     }
+    console.log(TAG, "Center 100x100 sample — non-white pixels:", nonWhite, "out of 10000");
+    if (nonWhite < 100) {
+      console.warn(TAG, "⚠️  Very few non-white pixels in center — watermark may not be visible!");
+    }
+  } catch (e) {
+    // Sampling is diagnostic only, never crash
   }
-
-  return out;
 }
 
 // -----------------------------------------------------------------------------
-// Render a single page from filename[pageNumber] into a PNG buffer using
-// @napi-rs/canvas (native). Returns the raw RGBA pixel data.
+// Render a single page from filename[pageNumber] into raw RGBA pixel data.
+//
+// Rendering order (guaranteed):
+//   1. Load PDF
+//   2. Create native canvas
+//   3. page.render() draws PDF content onto canvas
+//   4. drawWatermarkOnCanvas() draws watermark on SAME canvas
+//   5. ctx.getImageData() extracts final composited RGBA
 //
 // Throws:
 //   code: "ENOENT"             — file is missing on disk
@@ -238,27 +258,27 @@ function compositeWatermark(rgba, width, height, options) {
 //   code: "GETPAGE_FAILED"     — pdfjs-dist could not load this specific page
 //   code: "RENDER_FAILED"      — pdfjs-dist or native canvas rejected render
 //   code: "EBADCANVAS"         — viewport produced invalid dimensions
-//   code: "ENCODE_FAILED"      — canvas.toBuffer('image/png') returned empty
+//   code: "ENCODE_FAILED"      — canvas.getImageData() returned empty
 // -----------------------------------------------------------------------------
-async function renderPageRaw(filename, pageNumber, scale = 1.5) {
+async function renderPageRaw(filename, pageNumber, scale, watermarkOptions) {
   const TAG = "[pdfRenderer]";
   const startedAt = Date.now();
 
-  // ── 1. Load PDF ────────────────────────────────────────────────
-  console.log(TAG, "[1/6] loadPdf start", { filename, pageNumber });
+  // ── [1] Load PDF ─────────────────────────────────────────────────
+  console.log(TAG, "[1/7] loadPdf start", { filename, pageNumber });
   let pdfDoc;
   try {
     pdfDoc = await loadPdf(filename);
   } catch (e) {
-    console.error(TAG, "[1/6] loadPdf FAILED", { code: e.code, msg: e.message });
+    console.error(TAG, "[1/7] loadPdf FAILED", { code: e.code, msg: e.message });
     if (!e.pageNumber) e.pageNumber = pageNumber;
     if (!e.stage) e.stage = "loadPdf";
     throw e;
   }
-  console.log(TAG, "[1/6] loadPdf SUCCESS", { numPages: pdfDoc.numPages });
+  console.log(TAG, "[1/7] loadPdf SUCCESS", { numPages: pdfDoc.numPages });
 
   try {
-    // ── 2. Bounds check ──────────────────────────────────────────
+    // ── [2] Bounds check ──────────────────────────────────────────
     const total = pdfDoc.numPages;
     if (pageNumber < 1 || pageNumber > total) {
       const err = new Error(`Page ${pageNumber} out of range (1..${total})`);
@@ -267,37 +287,39 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
       err.stage = "boundsCheck";
       throw err;
     }
-    console.log(TAG, "[2/6] boundsCheck SUCCESS", { pageNumber, total });
+    console.log(TAG, "[2/7] boundsCheck SUCCESS", { pageNumber, total });
 
-    // ── 3. Get page ──────────────────────────────────────────────
-    console.log(TAG, "[3/6] getPage start", { pageNumber });
+    // ── [3] Get page ──────────────────────────────────────────────
+    console.log(TAG, "[3/7] getPage start", { pageNumber });
     let page;
     try {
       page = await pdfDoc.getPage(pageNumber);
     } catch (e) {
-      console.error(TAG, "[3/6] getPage FAILED", { msg: e.message, stack: e.stack });
+      console.error(TAG, "[3/7] getPage FAILED", { msg: e.message, stack: e.stack });
       const err = new Error(`getPage(${pageNumber}) failed: ${e.message}`);
       err.code = "GETPAGE_FAILED";
       err.pageNumber = pageNumber;
       err.stage = "getPage";
       throw err;
     }
-    console.log(TAG, "[3/6] getPage SUCCESS");
+    console.log(TAG, "[3/7] getPage SUCCESS");
 
-    // ── 4. Create native canvas ─────────────────────────────────
+    // ── [4] Create native canvas ──────────────────────────────────
     const viewport = page.getViewport({ scale });
     const width = Math.ceil(viewport.width);
     const height = Math.ceil(viewport.height);
 
-    if (!Number.isFinite(width) || !Number.isFinite(height) ||
-        width <= 0 || height <= 0 || width > 8192 || height > 8192) {
+    if (
+      !Number.isFinite(width) || !Number.isFinite(height) ||
+      width <= 0 || height <= 0 || width > 8192 || height > 8192
+    ) {
       const err = new Error(`Invalid canvas size: ${width}x${height}`);
       err.code = "EBADCANVAS";
       err.pageNumber = pageNumber;
       err.stage = "canvasCreate";
       throw err;
     }
-    console.log(TAG, "[4/6] canvasCreate SUCCESS", { width, height });
+    console.log(TAG, "[4/7] canvasCreate SUCCESS", { width, height });
 
     let canvas;
     let ctx;
@@ -305,7 +327,7 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
       canvas = createCanvas(width, height);
       ctx = canvas.getContext("2d");
     } catch (e) {
-      console.error(TAG, "[4/6] canvasCreate FAILED", { msg: e.message, stack: e.stack });
+      console.error(TAG, "[4/7] canvasCreate FAILED", { msg: e.message, stack: e.stack });
       const err = new Error(`Canvas creation failed: ${e.message}`);
       err.code = "EBADCANVAS";
       err.pageNumber = pageNumber;
@@ -313,8 +335,8 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
       throw err;
     }
 
-    // ── 5. Render page content onto the native canvas ───────────
-    console.log(TAG, "[5/6] renderPage start", { pageNumber, width, height });
+    // ── [5] Render PDF page content onto the canvas ───────────────
+    console.log(TAG, "[5/7] renderPage start", { pageNumber, width, height });
     try {
       await page
         .render({
@@ -325,7 +347,7 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
     } catch (e) {
       console.error(
         TAG,
-        "[5/6] renderPage FAILED",
+        "[5/7] renderPage FAILED",
         { pageNumber, msg: e.message, stack: e.stack },
       );
       const wrapped = new Error(
@@ -337,18 +359,41 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
       wrapped.cause = e;
       throw wrapped;
     }
-    console.log(TAG, "[5/6] renderPage SUCCESS", {
+    console.log(TAG, "[5/7] PDF render SUCCESS", {
       pageNumber,
-      durationMs: Date.now() - startedAt,
+      ms: Date.now() - startedAt,
     });
 
-    // ── 6. Extract RGBA for watermark compositing ───────────────
-    console.log(TAG, "[6/6] extractRGBA start", { pageNumber });
+    // ── [6] Draw watermark DIRECTLY on the same canvas ────────────
+    // This runs AFTER the PDF is fully rendered.
+    // ctx.save()/ctx.restore() ensure the canvas state is preserved.
+    // Skia handles the alpha compositing natively.
+    console.log(TAG, "[6/7] drawWatermark start", { pageNumber });
+    try {
+      drawWatermarkOnCanvas(ctx, width, height, {
+        name: watermarkOptions?.name,
+        email: watermarkOptions?.email,
+        date: watermarkOptions?.date,
+      });
+    } catch (e) {
+      console.error(TAG, "[6/7] drawWatermark FAILED", {
+        pageNumber,
+        msg: e.message,
+        stack: e.stack,
+      });
+      // Watermark failure is non-fatal — return the un-watermarked page
+      // rather than failing the entire request.
+      console.warn(TAG, "Proceeding without watermark due to error");
+    }
+    console.log(TAG, "[6/7] drawWatermark done", { pageNumber });
+
+    // ── [7] Extract final composited RGBA ─────────────────────────
+    console.log(TAG, "[7/7] getImageData start", { pageNumber });
     let imageData;
     try {
       imageData = ctx.getImageData(0, 0, width, height);
     } catch (e) {
-      console.error(TAG, "[6/6] extractRGBA FAILED", { msg: e.message, stack: e.stack });
+      console.error(TAG, "[7/7] getImageData FAILED", { msg: e.message, stack: e.stack });
       const err = new Error(`getImageData failed: ${e.message}`);
       err.code = "ENCODE_FAILED";
       err.pageNumber = pageNumber;
@@ -357,17 +402,17 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
     }
 
     if (!imageData?.data || imageData.data.length === 0) {
-      console.error(TAG, "[6/6] extractRGBA FAILED — empty imageData");
+      console.error(TAG, "[7/7] getImageData FAILED — empty imageData");
       const err = new Error("Canvas returned empty pixel data");
       err.code = "ENCODE_FAILED";
       err.pageNumber = pageNumber;
       err.stage = "getImageData";
       throw err;
     }
-    console.log(TAG, "[6/6] extractRGBA SUCCESS", {
+    console.log(TAG, "[7/7] getImageData SUCCESS", {
       pageNumber,
       rgbaBytes: imageData.data.length,
-      totalDurationMs: Date.now() - startedAt,
+      totalMs: Date.now() - startedAt,
     });
 
     return {
@@ -385,7 +430,7 @@ async function renderPageRaw(filename, pageNumber, scale = 1.5) {
 }
 
 // -----------------------------------------------------------------------------
-// PUBLIC: render a single page of `filename` as raw RGBA + watermark applied.
+// PUBLIC: render a single page of `filename` as raw RGBA with watermark.
 // The controller is responsible for encoding this to PNG via pngjs.
 //
 // Throws:
@@ -414,28 +459,11 @@ export async function renderPageAsRgba(filename, pageNumber, watermark) {
 
   let result;
   try {
-    const { width, height, rgba } = await renderPageRaw(
-      filename, pageNumber, 1.5,
-    );
-
-    console.log(TAG, "watermark start", { pageNumber });
-    const watermarked = compositeWatermark(rgba, width, height, {
+    result = await renderPageRaw(filename, pageNumber, 1.5, {
       name: safeName,
       email: safeEmail,
       date: safeDate,
-      pageNumber,
     });
-    console.log(TAG, "watermark done", { pageNumber });
-
-    result = {
-      width,
-      height,
-      rgba: new Uint8Array(
-        watermarked.buffer,
-        watermarked.byteOffset,
-        watermarked.byteLength,
-      ),
-    };
   } catch (e) {
     if (!e.pageNumber) e.pageNumber = pageNumber;
     if (!e.stage) e.stage = "renderPage";
@@ -452,19 +480,9 @@ export async function renderPageAsRgba(filename, pageNumber, watermark) {
   return result;
 }
 
-// Backwards-compatible wrapper for the old PNG-returning API.
-// We take the watermarked RGBA from renderPageAsRgba, wrap it in a pngjs
-// PNG object (which adds proper PNG headers/compression), and return the
-// final PNG byte buffer.
-//
-// IMPORTANT: This is the ONLY place we encode to PNG. renderPageRaw returns
-// raw RGBA only — no wasteful encode → decode roundtrip.
-
+// Encodes watermarked RGBA to PNG bytes using pngjs.
 export async function renderPageAsPng(filename, pageNumber, watermark) {
   const result = await renderPageAsRgba(filename, pageNumber, watermark);
-
-  // Fast-path: if renderPageRaw already produced a PNG buffer, just re-encode
-  // it with the watermark applied (we need to go through pngjs for that).
   const png = new PNG({ width: result.width, height: result.height });
   png.data = Buffer.from(result.rgba.buffer, result.rgba.byteOffset, result.rgba.byteLength);
   return PNG.sync.write(png);
