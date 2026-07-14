@@ -4,6 +4,7 @@ import Layout from "../components/Layout";
 import Loader from "../components/Loader";
 import { toast } from "react-toastify";
 import AccessCountdown from "../components/AccessCountdown";
+import { useNavigate } from "react-router-dom";
 import "../css/student.css";
 
 const StudentDashboard = () => {
@@ -12,6 +13,7 @@ const StudentDashboard = () => {
 const [totalPages, setTotalPages] = useState(1);
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
 
@@ -55,10 +57,12 @@ const [totalPages, setTotalPages] = useState(1);
   };
 
   const openBook = async (bookId) => {
+    // In the new secure flow we navigate to the BookViewer route which
+    // fetches pages one at a time as watermarked PNG images. The raw PDF
+    // never reaches the browser.
     try {
-      const { data } = await API.get(`/access/book/${bookId}`);
       toast.info("Opening book... 📖");
-      window.open(data.pdfLink, "_blank");
+      navigate(`/student/book/${bookId}`);
     } catch (error) {
       toast.error(error.response?.data?.message || "Access denied");
     }

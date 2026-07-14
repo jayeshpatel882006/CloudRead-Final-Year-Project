@@ -204,7 +204,7 @@ GOOGLE_DRIVE_BASE_URL=your_drive_link_prefix
 
 ```bash
 git clone https://github.com/jayeshpatel882006/CloudRead-Final-Year-Project.git
-cd cloudread
+cd CloudRead-Final-Year-Project
 ```
 
 ### 2️⃣ Backend Setup

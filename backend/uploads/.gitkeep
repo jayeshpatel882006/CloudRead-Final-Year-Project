@@ -1,0 +1,2 @@
+# Placeholder — keep this folder under version control so uploads/ exists on first run.
+# The pdfRenderer service writes actual *.pdf files here at runtime.

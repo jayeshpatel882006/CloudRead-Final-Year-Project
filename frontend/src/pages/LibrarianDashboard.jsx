@@ -17,8 +17,9 @@ const LibrarianDashboard = () => {
     author: "",
     category: "",
     description: "",
-    pdfLink: "",
   });
+  const [pdfFile, setPdfFile] = useState(null);
+  const [uploadLoading, setUploadLoading] = useState(false);
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -67,19 +68,48 @@ const LibrarianDashboard = () => {
 
   const addBook = async (e) => {
     e.preventDefault();
+
+    if (!pdfFile) {
+      toast.error("Please select a PDF file to upload");
+      return;
+    }
+    if (pdfFile.type !== "application/pdf") {
+      toast.error("Only PDF files are allowed");
+      return;
+    }
+    if (pdfFile.size > 50 * 1024 * 1024) {
+      toast.error("PDF must be smaller than 50MB");
+      return;
+    }
+
+    const data = new FormData();
+    data.append("title", formData.title);
+    data.append("author", formData.author);
+    data.append("category", formData.category);
+    data.append("description", formData.description);
+    data.append("pdf", pdfFile);
+
     try {
-      await API.post("/books", formData);
+      setUploadLoading(true);
+      await API.post("/books", data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
       setFormData({
         title: "",
         author: "",
         category: "",
         description: "",
-        pdfLink: "",
       });
+      setPdfFile(null);
+      // Reset the native file input by re-mounting — easiest is to clear value via a ref.
+      const fileInput = document.getElementById("pdf-input");
+      if (fileInput) fileInput.value = "";
       toast.success("Book added successfully!");
       fetchData();
     } catch (error) {
-      toast.error("Book creation failed");
+      toast.error(error.response?.data?.message || "Book creation failed");
+    } finally {
+      setUploadLoading(false);
     }
   };
 
@@ -148,16 +178,27 @@ return (
 
             <input
               type="text"
-              placeholder="PDF Link"
-              value={formData.pdfLink}
+              placeholder="Description"
+              value={formData.description}
               onChange={(e) =>
-                setFormData({ ...formData, pdfLink: e.target.value })
+                setFormData({ ...formData, description: e.target.value })
               }
+            />
+
+            <input
+              id="pdf-input"
+              type="file"
+              accept="application/pdf"
+              onChange={(e) => setPdfFile(e.target.files[0] || null)}
               required
             />
 
-            <button type="submit" className="btn-primary">
-              Add Book
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={uploadLoading}
+            >
+              {uploadLoading ? "Uploading…" : "Add Book"}
             </button>
           </form>
         </div>

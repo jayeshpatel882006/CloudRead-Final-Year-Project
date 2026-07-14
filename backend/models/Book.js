@@ -17,10 +17,28 @@ const bookSchema = new mongoose.Schema(
     description: {
       type: String,
     },
-    pdfLink: {
+
+    // ─── NEW: server-only file storage ──────────────────────────────
+    // `filename` is the *random* name written under backend/uploads.
+    // Never expose this to clients.
+    filename: {
       type: String,
       required: true,
+      select: false, // never returned by default
     },
+    originalFilename: {
+      type: String,
+      select: false, // never returned by default
+    },
+    fileSize: {
+      type: Number,
+    },
+    totalPages: {
+      type: Number,
+      default: 0,
+    },
+    // ────────────────────────────────────────────────────────────────
+
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

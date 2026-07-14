@@ -4,8 +4,9 @@ import {
   approveRequest,
   getMyRequests,
   getAllRequests,
-  getSecureBookAccess,
   rejectRequest,
+  getBookInfo,
+  getBookPage,
 } from "../controllers/accessController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -13,29 +14,37 @@ import { authorizeRoles } from "../middleware/roleMiddleware.js";
 
 const router = express.Router();
 
-// Student requests book
+// ── Student requests book ──────────────────────────────────────────────
 router.post("/", protect, authorizeRoles("student"), requestAccess);
 
-// Student view own requests
+// ── Student view own requests ─────────────────────────────────────────
 router.get("/my", protect, authorizeRoles("student"), getMyRequests);
 
-// Librarian/Admin view all
+// ── NEW: secure book info (sanitized metadata) ────────────────────────
+router.get(
+  "/book/:bookId/info",
+  protect,
+  authorizeRoles("student"),
+  getBookInfo,
+);
+
+// ── NEW: per-page watermarked image ───────────────────────────────────
+router.get(
+  "/book/:bookId/page/:pageNumber",
+  protect,
+  authorizeRoles("student"),
+  getBookPage,
+);
+
+// ── Librarian/Admin view all ──────────────────────────────────────────
 router.get("/", protect, authorizeRoles("librarian", "admin"), getAllRequests);
 
-// Librarian/Admin approve
+// ── Librarian/Admin approve / reject ──────────────────────────────────
 router.put(
   "/approve/:id",
   protect,
   authorizeRoles("librarian", "admin"),
   approveRequest,
-);
-
-// Student secure book access
-router.get(
-  "/book/:bookId",
-  protect,
-  authorizeRoles("student"),
-  getSecureBookAccess,
 );
 
 router.put(

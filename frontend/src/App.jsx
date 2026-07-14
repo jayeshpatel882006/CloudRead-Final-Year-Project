@@ -13,6 +13,7 @@ import "react-toastify/dist/ReactToastify.css";
 import ActiveStudentsPage from "./pages/ActiveStudentsPage";
 import PublicRoute from "./components/PublicRoute";
 import ScrollToTop from "./components/ScrollToTop";
+import BookViewer from "./pages/BookViewer";
 
 function App() {
   const location = useLocation();
@@ -37,6 +38,15 @@ function App() {
             <ProtectedRoute role="student">
               <StudentDashboard />
              </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/student/book/:bookId"
+          element={
+            <ProtectedRoute role="student">
+              <BookViewer />
+            </ProtectedRoute>
           }
         />
         <Route
