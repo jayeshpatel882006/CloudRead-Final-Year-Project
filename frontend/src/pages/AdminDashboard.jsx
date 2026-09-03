@@ -10,6 +10,7 @@ import AdminUsers from "../components/admin/AdminUsers";
 import AdminBooks from "../components/admin/AdminBooks";
 import AdminCategories from "../components/admin/AdminCategories";
 import AdminActivity from "../components/admin/AdminActivity";
+import AdminAnalytics from "../components/admin/AdminAnalytics";
 
 export default function AdminDashboard() {
   const { user, logout } = useContext(AuthContext);
@@ -25,6 +26,7 @@ export default function AdminDashboard() {
           <Route path="books" element={<AdminBooks />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="activity" element={<AdminActivity />} />
+          <Route path="analytics" element={<AdminAnalytics />} />
           <Route path="*" element={<Navigate to="." replace />} />
         </Routes>
       </AppShell>

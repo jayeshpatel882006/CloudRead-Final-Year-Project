@@ -134,6 +134,123 @@
   margin-top: 2px;
 }
 
+.cr-librarian__item-message {
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  font-style: italic;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 340px;
+}
+
+.cr-librarian__item-detail {
+  flex-shrink: 0;
+}
+
+.cr-librarian__pagination-note {
+  margin: 0;
+  text-align: center;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+  letter-spacing: -0.005em;
+}
+
+/* ─── Approval / details dialogs ─────────────────────────────────── */
+.cr-approval-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cr-approval-dialog__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.cr-approval-dialog__block h4 {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+
+.cr-approval-dialog__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: var(--text-body-md);
+  color: var(--color-text);
+  letter-spacing: -0.005em;
+}
+
+.cr-approval-dialog__muted {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+}
+
+.cr-approval-dialog__quote {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-body-sm);
+  font-style: italic;
+  color: var(--color-text-secondary);
+  letter-spacing: -0.005em;
+}
+
+.cr-approval-dialog__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.cr-approval-dialog__summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cr-approval-dialog__summary strong {
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: var(--text-body-md);
+  letter-spacing: -0.005em;
+}
+
+.cr-approval-dialog__summary span {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  letter-spacing: -0.005em;
+}
+
+.cr-approval-dialog__summary em {
+  font-style: normal;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.cr-approval-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+
 .cr-librarian__item-actions {
   display: flex;
   align-items: center;
@@ -592,4 +709,61 @@
   font-size: var(--text-caption);
   color: var(--color-text-muted);
   letter-spacing: -0.005em;
+}
+
+/* ─── Reading analytics additions ───────────────────────────────────── */
+.cr-librarian__insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.cr-librarian__chart {
+  width: 100%;
+  min-height: 280px;
+}
+
+.cr-librarian__engagement {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cr-librarian__engagement-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  font-size: var(--text-body-sm);
+  letter-spacing: -0.005em;
+}
+
+.cr-librarian__engagement-item:last-child { border-bottom: none; }
+
+.cr-librarian__engagement-item--empty {
+  color: var(--color-text-muted);
+  justify-content: center;
+  padding: var(--space-8);
+}
+
+.cr-librarian__engagement-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-librarian__engagement-info strong {
+  color: var(--color-text);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-librarian__engagement-info span {
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
 }

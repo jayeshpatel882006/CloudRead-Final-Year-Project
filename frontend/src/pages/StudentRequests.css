@@ -1,0 +1,157 @@
+/* pages/StudentRequests.css — built on design tokens */
+
+.cr-student-requests {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.cr-sr__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-16) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+.cr-sr__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cr-sr__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cr-sr__card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.cr-sr__card-book {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  min-width: 0;
+}
+
+.cr-sr__card-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-sr__card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-md);
+  line-height: var(--text-heading-md-lh);
+  color: var(--color-text);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-sr__card-author {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.cr-sr__card-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+.cr-sr__status-note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm-lh);
+  color: var(--color-text-secondary);
+}
+
+.cr-sr__status-note svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-text-muted);
+}
+
+.cr-sr__status-note--success {
+  background: var(--color-success-bg);
+  border-color: var(--success-100);
+  color: var(--color-success-text);
+}
+
+.cr-sr__status-note--success svg {
+  color: var(--color-success);
+}
+
+.cr-sr__status-note--danger {
+  background: var(--color-danger-bg);
+  border-color: var(--danger-100);
+  color: var(--color-danger-text);
+}
+
+.cr-sr__status-note--danger svg {
+  color: var(--color-danger);
+}
+
+.cr-sr__message {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm-lh);
+  color: var(--color-text-secondary);
+}
+
+.cr-sr__message svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--color-primary);
+}
+
+.cr-sr__message strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.cr-sr__message--response svg {
+  color: var(--color-accent);
+}
+
+.cr-sr__card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cr-sr__pagination {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 560px) {
+  .cr-sr__card-top {
+    flex-direction: column;
+  }
+}

@@ -26,6 +26,7 @@ import {
   Tabs,
 } from "../components/ui";
 import ActiveReadingCard from "../components/ActiveReadingCard";
+import RequestAccessDialog from "../components/student/RequestAccessDialog";
 import "./StudentDashboard.css";
 
 const STATUS_META = {
@@ -45,7 +46,7 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [actionLoading, setActionLoading] = useState(null);
+  const [requestBook, setRequestBook] = useState(null);
 
   useEffect(() => {
     fetchBooks(1);
@@ -69,8 +70,10 @@ export default function StudentDashboard() {
 
   const fetchRequests = async () => {
     try {
-      const res = await API.get("/access/my");
-      setRequests(res.data);
+      const res = await API.get("/access/my", {
+        params: { status: "all", limit: 50 },
+      });
+      setRequests(res.data.requests || []);
     } catch {
       // silent — main cards still render
     }
@@ -87,16 +90,8 @@ export default function StudentDashboard() {
   };
 
   const requestAccess = async (bookId) => {
-    try {
-      setActionLoading(bookId);
-      await API.post("/access", { bookId });
-      await fetchRequests();
-      toast.success("Access request sent.");
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Request failed.");
-    } finally {
-      setActionLoading(null);
-    }
+    const book = books.find((b) => b._id === bookId);
+    setRequestBook(book || { _id: bookId });
   };
 
   const openBook = (bookId) => {
@@ -163,6 +158,7 @@ export default function StudentDashboard() {
       search={search}
       onSearchChange={setSearch}
       user={user}
+      notificationCount={activeReadings.length}
     />
   );
 
@@ -296,7 +292,6 @@ export default function StudentDashboard() {
                             e.stopPropagation();
                             requestAccess(book._id);
                           }}
-                          disabled={actionLoading === book._id}
                         >
                           Request again
                         </button>
@@ -309,8 +304,6 @@ export default function StudentDashboard() {
                             e.stopPropagation();
                             requestAccess(book._id);
                           }}
-                          disabled={actionLoading === book._id}
-                          loading={actionLoading === book._id}
                         >
                           Request access
                         </button>
@@ -333,6 +326,13 @@ export default function StudentDashboard() {
           ) : null}
         </div>
       </AppShell>
+
+      <RequestAccessDialog
+        open={Boolean(requestBook)}
+        onClose={() => setRequestBook(null)}
+        book={requestBook}
+        onSubmitted={fetchRequests}
+      />
     </PageWrapper>
   );
 }

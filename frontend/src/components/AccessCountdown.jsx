@@ -11,8 +11,8 @@ const AccessCountdown = ({ bookId }) => {
     const fetchAccess = async () => {
       const res = await API.get(`/access/my`);
 
-      const request = res.data.find(
-        (r) => r.book._id === bookId && r.status === "approved"
+      const request = (res.data.requests || res.data).find(
+        (r) => r.book?._id === bookId && r.status === "approved"
       );
 
       if (!request) return;

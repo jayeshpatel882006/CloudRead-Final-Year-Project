@@ -28,6 +28,7 @@ const ROLE_META = {
         items: [
           { to: "/student", label: "Library", icon: BookOpen, end: true },
           { to: "/student/requests", label: "My requests", icon: BookMarked },
+          { to: "/student/analytics", label: "My analytics", icon: BarChart3 },
           { to: "/student/history", label: "Reading history", icon: History },
         ],
       },
@@ -57,6 +58,7 @@ const ROLE_META = {
           { to: "/admin/books", label: "Books", icon: BookOpen },
           { to: "/admin/categories", label: "Categories", icon: Tags },
           { to: "/admin/activity", label: "Activity", icon: Activity },
+          { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
         ],
       },
     ],

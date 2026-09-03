@@ -77,6 +77,31 @@ const BookViewer = () => {
   const pageRefs = useRef(new Map());
   const containerRef = useRef(null);
 
+  // ── Reading session tracking ──────────────────────────────
+  const sessionRef = useRef(null);
+  const sessionBookRef = useRef(null);
+  const stopTimerRef = useRef(null);
+  const heartbeatTimerRef = useRef(null);
+  const tickTimerRef = useRef(null);
+  const currentPageRef = useRef(1);
+  const totalPagesRef = useRef(0);
+  const activeSecondsRef = useRef(0);
+  const trackingRef = useRef(false);
+  const [trackingActive, setTrackingActive] = useState(false);
+
+  // Keep refs in sync for the session tracker (avoid stale closures).
+  useEffect(() => {
+    currentPageRef.current = currentPage;
+  }, [currentPage]);
+
+  useEffect(() => {
+    totalPagesRef.current = meta?.totalPages || 0;
+  }, [meta]);
+
+  useEffect(() => {
+    trackingRef.current = trackingActive;
+  }, [trackingActive]);
+
   // ── Metadata fetch ─────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
@@ -117,6 +142,184 @@ const BookViewer = () => {
 
     return () => { cancelled = true; };
   }, [bookId, navigate]);
+
+  // ── Reading session: start / heartbeat / stop ───────────────────
+  // Send the periodic activity update. Only runs while the tab is visible, so
+  // hidden-tab time is never counted. `activeSeconds` carries how many seconds
+  // the ticker actually counted while visible; the backend clamps it.
+  const sendHeartbeat = useCallback(async () => {
+    const sessionId = sessionRef.current;
+    if (!sessionId || !trackingRef.current) return;
+    if (document.visibilityState !== "visible") return;
+
+    const activeSeconds = activeSecondsRef.current;
+    activeSecondsRef.current = 0;
+
+    try {
+      const { data } = await API.post("/reading/heartbeat", {
+        sessionId,
+        currentPage: currentPageRef.current,
+        totalPages: totalPagesRef.current,
+        activeSeconds,
+      });
+      console.debug(TAG, "heartbeat", {
+        lastPage: data.lastPage,
+        progress: data.progressPercentage,
+        duration: data.durationInSeconds,
+      });
+    } catch (err) {
+      // Session closed / access revoked / expired → stop tracking quietly.
+      const status = err.response?.status;
+      if (status === 400 || status === 403 || status === 404 || status === 410) {
+        trackingRef.current = false;
+        sessionRef.current = null;
+        setTrackingActive(false);
+      }
+    }
+  }, []);
+
+  // Fire-and-forget stop for unload events — keepalive fetch carries the JWT.
+  const fireAndForgetStop = useCallback((payloadOverride) => {
+    const sessionId = sessionRef.current;
+    if (!sessionId && !payloadOverride) return;
+    if (payloadOverride) sessionRef.current = null;
+    sessionBookRef.current = null;
+
+    const payload = payloadOverride || {
+      sessionId,
+      currentPage: currentPageRef.current,
+      totalPages: totalPagesRef.current,
+      activeSeconds: activeSecondsRef.current,
+    };
+    activeSecondsRef.current = 0;
+    trackingRef.current = false;
+
+    const token = localStorage.getItem("token");
+    try {
+      fetch(`${API.defaults.baseURL}/reading/stop`, {
+        method: "POST",
+        keepalive: true,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      }).catch(() => {});
+    } catch {
+      /* ignore — backend stale-session handling is the safety net */
+    }
+  }, []);
+
+  // Stop the session (SPA navigation / reader close).
+  const stopSession = useCallback(async () => {
+    const sessionId = sessionRef.current;
+    if (!sessionId) return;
+
+    sessionRef.current = null;
+    trackingRef.current = false;
+    setTrackingActive(false);
+    clearInterval(heartbeatTimerRef.current);
+
+    const payload = {
+      sessionId,
+      currentPage: currentPageRef.current,
+      totalPages: totalPagesRef.current,
+      activeSeconds: activeSecondsRef.current,
+    };
+    activeSecondsRef.current = 0;
+
+    try {
+      const { data } = await API.post("/reading/stop", payload);
+      console.debug(TAG, "reading session stopped", data);
+    } catch {
+      // If the regular request fails (e.g. page is unloading), fall back to a
+      // keepalive beacon so the final stats can still land.
+      fireAndForgetStop(payload);
+    }
+  }, [fireAndForgetStop]);
+
+  // Session starts only once the book metadata loads successfully (i.e. access
+  // was verified). The backend re-validates access on every call, and returns
+  // the existing live session when one is already open (idempotent start, safe
+  // for StrictMode double-mounts and tab reloads).
+  useEffect(() => {
+    if (!meta || !bookId) return;
+    let cancelled = false;
+    // A previous (StrictMode) cleanup may have scheduled a delayed stop —
+    // cancelling it lets the remount reuse the live session.
+    clearTimeout(stopTimerRef.current);
+
+    const begin = async () => {
+      // If the reader switched books without a clean unmount (e.g. direct
+      // book-to-book navigation), close the previous book's session first.
+      if (sessionBookRef.current && sessionBookRef.current !== bookId) {
+        fireAndForgetStop();
+      }
+      try {
+        const { data } = await API.post("/reading/start", { bookId });
+        if (cancelled) return;
+        sessionRef.current = data.sessionId;
+        sessionBookRef.current = bookId;
+        setTrackingActive(true);
+        clearTimeout(stopTimerRef.current);
+        console.debug(TAG, "reading session started", {
+          sessionId: data.sessionId,
+          reused: !!data.reused,
+        });
+      } catch (err) {
+        // 403/410 are surfaced by the book-info fetch already — just stay
+        // untracked.
+        console.debug(TAG, "reading session not started", err.response?.status);
+      }
+    };
+
+    begin();
+
+    return () => {
+      cancelled = true;
+      if (sessionRef.current) {
+        // Delay the stop slightly so a StrictMode remount can reuse the session
+        // instead of stopping + recreating it.
+        stopTimerRef.current = setTimeout(stopSession, 2000);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookId, meta]);
+
+  // Active-time ticker: counts one second per tick ONLY while the document is
+  // visible, so hidden-tab / background time is never counted.
+  useEffect(() => {
+    tickTimerRef.current = setInterval(() => {
+      if (document.visibilityState === "visible" && sessionRef.current) {
+        activeSecondsRef.current += 1;
+      }
+    }, 1000);
+    return () => clearInterval(tickTimerRef.current);
+  }, []);
+
+  // Heartbeat cadence: every 60s while a session is tracked.
+  useEffect(() => {
+    if (!trackingActive) return;
+    heartbeatTimerRef.current = setInterval(sendHeartbeat, 60000);
+    return () => clearInterval(heartbeatTimerRef.current);
+  }, [trackingActive, sendHeartbeat]);
+
+  // Unload safety net: page close / tab close / navigation away. Uses a
+  // keepalive fetch (with the JWT header) because `beforeunload` fetch requests
+  // without keepalive are unreliable. Backend stale-session handling covers any
+  // case where even this is dropped.
+  useEffect(() => {
+    const handleUnload = () => {
+      clearTimeout(stopTimerRef.current);
+      fireAndForgetStop();
+    };
+    window.addEventListener("pagehide", handleUnload);
+    window.addEventListener("beforeunload", handleUnload);
+    return () => {
+      window.removeEventListener("pagehide", handleUnload);
+      window.removeEventListener("beforeunload", handleUnload);
+    };
+  }, [fireAndForgetStop]);
 
   // ── IntersectionObserver for lazy loading ──────────────────────
   useEffect(() => {

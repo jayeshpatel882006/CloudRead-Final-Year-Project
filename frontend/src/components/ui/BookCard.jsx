@@ -11,6 +11,7 @@ export default function BookCard({
   badge,
   progress, // 0..1
   showProgress = false,
+  children,
   ...rest
 }) {
   const {
@@ -47,6 +48,7 @@ export default function BookCard({
         <p className="cr-book-card__author" title={author}>{author}</p>
         {category ? <Badge variant="neutral" size="sm">{category}</Badge> : null}
       </div>
+      {children}
     </Card>
   );
 }

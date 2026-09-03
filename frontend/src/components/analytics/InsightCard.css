@@ -1,0 +1,84 @@
+/* components/analytics/InsightCard.css — built on design tokens */
+
+.cr-insight {
+  display: flex;
+  gap: var(--space-4);
+  align-items: flex-start;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elev-1);
+  transition: box-shadow var(--duration-base) var(--ease-standard),
+    transform var(--duration-base) var(--ease-standard);
+}
+
+.cr-insight:hover {
+  box-shadow: var(--elev-2);
+  transform: translateY(-2px);
+}
+
+.cr-insight__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  font-size: 1.15rem;
+  background: var(--color-primary-tint);
+}
+
+.cr-insight__body {
+  min-width: 0;
+}
+
+.cr-insight__title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-sm);
+  line-height: var(--text-heading-sm-lh);
+  letter-spacing: var(--text-heading-sm-track);
+  color: var(--color-text);
+  margin: 0 0 var(--space-1);
+}
+
+.cr-insight__message {
+  font-size: var(--text-body-sm);
+  line-height: var(--text-body-sm-lh);
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ── Priority accents ──────────────────────────────────────────── */
+.cr-insight--positive .cr-insight__icon {
+  background: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+.cr-insight--positive {
+  border-color: var(--success-100);
+}
+
+.cr-insight--warning .cr-insight__icon {
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+}
+
+.cr-insight--warning {
+  border-color: var(--warning-100);
+}
+
+.cr-insight--info .cr-insight__icon {
+  background: var(--color-info-bg);
+  color: var(--color-info-text);
+}
+
+.cr-insight--info {
+  border-color: var(--info-100);
+}
+
+.cr-insight--neutral .cr-insight__icon {
+  background: var(--color-surface-sunken);
+  color: var(--color-text-muted);
+}

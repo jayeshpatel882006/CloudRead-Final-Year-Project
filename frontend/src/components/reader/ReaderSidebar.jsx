@@ -29,9 +29,11 @@ export default function ReaderSidebar({ open, onClose, meta, currentPage, bookId
 
     const fetchAccess = async () => {
       try {
-        const res = await API.get("/access/my");
+        const res = await API.get("/access/my", {
+          params: { status: "approved", limit: 100 },
+        });
         if (cancelled) return;
-        const request = res.data.find(
+        const request = res.data.requests.find(
           (r) =>
             (typeof r.book === "object" ? r.book._id : r.book) === bookId &&
             r.status === "approved",

@@ -7,6 +7,7 @@ import bookRoutes from "./routes/bookRoutes.js";
 import accessRoutes from "./routes/accessRoutes.js";
 import startExpiryJob from "./cron/expiryJob.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import readingRoutes from "./routes/readingRoutes.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/books", bookRoutes);
 app.use("/api/access", accessRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/reading", readingRoutes);
 
 // Test Route
 app.get("/", (req, res) => {

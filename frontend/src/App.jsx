@@ -6,6 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import StudentDashboard from "./pages/StudentDashboard";
+import StudentAnalytics from "./pages/StudentAnalytics";
+import StudentRequests from "./pages/StudentRequests";
 import LibrarianDashboard from "./pages/LibrarianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Home from "./pages/Home";
@@ -33,6 +35,30 @@ function App() {
           } />
           <Route path="/" element={<Home />} />
 
+          <Route
+            path="/student/analytics"
+            element={
+              <ProtectedRoute role="student">
+                <StudentAnalytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/requests"
+            element={
+              <ProtectedRoute role="student">
+                <StudentRequests />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/student/history"
+            element={
+              <ProtectedRoute role="student">
+                <StudentRequests />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/student/*"
             element={

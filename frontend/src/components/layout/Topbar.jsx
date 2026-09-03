@@ -11,6 +11,7 @@ export default function Topbar({
   user,
   onMenuClick,
   rightSlot,
+  notificationCount,
   className = "",
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,8 +45,15 @@ export default function Topbar({
 
       <div className="cr-topbar__right">
         {rightSlot}
-        <button type="button" className="cr-topbar__icon" aria-label="Notifications">
+        <button
+          type="button"
+          className="cr-topbar__icon"
+          aria-label={notificationCount ? `Notifications (${notificationCount})` : "Notifications"}
+        >
           <Bell size={18} />
+          {notificationCount ? (
+            <span className="cr-topbar__badge">{notificationCount}</span>
+          ) : null}
         </button>
         <button
           type="button"

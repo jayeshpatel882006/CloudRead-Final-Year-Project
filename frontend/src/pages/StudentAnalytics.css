@@ -1,0 +1,199 @@
+/* pages/StudentAnalytics.css — built on design tokens */
+
+.cr-student-analytics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.cr-sa__loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-16) 0;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-sm);
+}
+
+/* ── Stats ─────────────────────────────────────────────────────── */
+.cr-sa__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-4);
+}
+
+/* ── Insights ──────────────────────────────────────────────────── */
+.cr-sa__insights-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.cr-sa__insights-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+/* ── Chart ─────────────────────────────────────────────────────── */
+.cr-sa__chart {
+  width: 100%;
+}
+
+/* ── Continue reading ──────────────────────────────────────────── */
+.cr-sa__continue-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.cr-sa__continue-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.cr-sa__continue-top {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+}
+
+.cr-sa__continue-info {
+  min-width: 0;
+}
+
+.cr-sa__continue-title {
+  font-family: var(--font-display);
+  font-size: var(--text-heading-sm);
+  line-height: var(--text-heading-sm-lh);
+  letter-spacing: var(--text-heading-sm-track);
+  color: var(--color-text);
+  margin: 0 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-sa__continue-author {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Progress bar ──────────────────────────────────────────────── */
+.cr-sa__progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cr-sa__progress-track {
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-sunken);
+  overflow: hidden;
+}
+
+.cr-sa__progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
+  transition: width var(--duration-slow) var(--ease-standard);
+}
+
+.cr-sa__progress-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-caption);
+  color: var(--color-text-muted);
+}
+
+/* ── Most read list ────────────────────────────────────────────── */
+.cr-sa__most-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.cr-sa__most-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.cr-sa__most-item:last-child {
+  border-bottom: none;
+}
+
+.cr-sa__most-rank {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-tint);
+  color: var(--color-primary);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+
+.cr-sa__most-info {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-sa__most-info strong {
+  font-size: var(--text-body-md);
+  color: var(--color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cr-sa__most-info span {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-muted);
+}
+
+.cr-sa__most-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex-shrink: 0;
+}
+
+.cr-sa__most-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-caption);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .cr-sa__most-meta {
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--space-1);
+  }
+}

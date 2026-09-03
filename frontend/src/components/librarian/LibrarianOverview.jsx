@@ -72,10 +72,10 @@ export default function LibrarianOverview() {
     (async () => {
       try {
         const [reqs, booksRes] = await Promise.all([
-          API.get("/access"),
+          API.get("/access", { params: { limit: 100 } }),
           API.get("/books"),
         ]);
-        setRequests(reqs.data);
+        setRequests(reqs.data.requests);
         setBooks(booksRes.data.books);
       } catch {
         toast.error("Couldn't load overview data.");

@@ -28,8 +28,8 @@ export default function AdminActivity() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await API.get("/access");
-        const sorted = [...res.data].sort(
+        const res = await API.get("/access", { params: { limit: 100 } });
+        const sorted = [...res.data.requests].sort(
           (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
         );
         setRequests(sorted);
